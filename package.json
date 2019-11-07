@@ -1,0 +1,7 @@
+{
+	"description": "A small, scalable open source RTOS for IoT embedded devices",
+	"name": "framework-zephyr",
+	"system": "*",
+	"url": "https://www.zephyrproject.org/",
+	"version": "1.20000.0"
+}
