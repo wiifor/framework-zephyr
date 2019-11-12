@@ -22,6 +22,7 @@ from SCons.Script import DefaultEnvironment
 
 from platformio import util
 from platformio.proc import exec_command
+from platformio.util import get_systype
 
 Import("env")
 
@@ -75,15 +76,19 @@ def populate_zephyr_env_vars(zephyr_env, platform_name, board_config):
 
     zephyr_env["ZEPHYR_TOOLCHAIN_VARIANT"] = toolchain_variant
     zephyr_env["ZEPHYR_BASE"] = FRAMEWORK_DIR
+
+    additional_packages = [
+        platform.get_package_dir("tool-dtc"),
+        platform.get_package_dir("tool-ninja")
+    ]
+
+    if "windows" not in get_systype():
+        additional_packages.append(platform.get_package_dir("tool-gperf"))
+
     zephyr_env["PATH"] = (
         str(env["ENV"]["PATH"])
         + pathsep
-        + pathsep.join(
-            [
-                platform.get_package_dir("tool-dtc"),
-                join(platform.get_package_dir("tool-ninja")),
-            ]
-        )
+        + pathsep.join(additional_packages)
     )
 
 
