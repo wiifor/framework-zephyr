@@ -693,6 +693,7 @@ preliminary_elf_path = join("$BUILD_DIR", "firmware-pre.elf")
 env.Depends(preliminary_elf_path, join(BUILD_DIR, "libkernel.a"))
 
 pre_elf_targets = (
+    offsets_lib,
     syscall_files,
     generate_syscall_macro_header(),
     generate_kobject_files(),
@@ -703,6 +704,7 @@ for dep in pre_elf_targets:
     add_ordered_dependency(preliminary_elf_path, dep)
 
 final_elf_targets = (
+    offsets_lib,
     syscall_files,
     final_ld_script,
     generate_isr_table_file_cmd(preliminary_elf_path, board, env.subst("$PIOPLATFORM")),
