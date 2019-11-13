@@ -82,7 +82,7 @@ def populate_zephyr_env_vars(zephyr_env, platform_name, board_config):
         platform.get_package_dir("tool-ninja")
     ]
 
-    if "windows" not in get_systype():
+    if "linux" in get_systype():
         additional_packages.append(platform.get_package_dir("tool-gperf"))
 
     zephyr_env["PATH"] = (
