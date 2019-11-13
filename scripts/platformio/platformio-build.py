@@ -51,29 +51,37 @@ def add_ordered_dependency(target, dependency):
     env.Requires(target, dependency)
 
 
-def populate_zephyr_env_vars(zephyr_env, platform_name, board_config):
-    toolchain_variant = "UKNOWN"
+def get_platform_architecture(board_config):
     if board_config.get("build.cpu", "").lower().startswith("cortex"):
+        return "arm"
+    elif board_config.get("build.march", "") in ("rv64imac", "rv32imac"):
+        return "riscv"
+    elif board_config.get("build.mcu") == "esp32":
+        return "xtensa32"
+
+    sys.stderr.write("Error: Cannot configure Zephyr environment for %s\n" % env.subst(
+        "$PIOPLATFORM"))
+    env.Exit(1)
+
+def populate_zephyr_env_vars(zephyr_env, board_config):
+    toolchain_variant = "UKNOWN"
+    arch = get_platform_architecture(board_config)
+    if arch == "arm":
         toolchain_variant = "gnuarmemb"
         zephyr_env["GNUARMEMB_TOOLCHAIN_PATH"] = platform.get_package_dir(
             "toolchain-gccarmnoneeabi"
         )
-    elif platform_name == "sifive":
+    elif arch == "riscv":
         toolchain_variant = "cross-compile"
         zephyr_env["CROSS_COMPILE"] = join(
             platform.get_package_dir("toolchain-riscv"), "bin", "riscv64-unknown-elf-"
         )
-    elif board_config.get("build.mcu", "") == "esp32":
+    elif arch == "xtensa32":
         toolchain_variant = "espressif"
         zephyr_env["ESPRESSIF_TOOLCHAIN_PATH"] = platform.get_package_dir(
             "toolchain-xtensa32"
         )
-    else:
-        sys.stderr.write(
-            "Error: Cannot configure Zephyr environment for %s\n" % platform_name
-        )
-        env.Exit(1)
-
+        
     zephyr_env["ZEPHYR_TOOLCHAIN_VARIANT"] = toolchain_variant
     zephyr_env["ZEPHYR_BASE"] = FRAMEWORK_DIR
 
@@ -82,7 +90,7 @@ def populate_zephyr_env_vars(zephyr_env, platform_name, board_config):
         platform.get_package_dir("tool-ninja")
     ]
 
-    if "linux" in get_systype():
+    if "windows" not in get_systype():
         additional_packages.append(platform.get_package_dir("tool-gperf"))
 
     zephyr_env["PATH"] = (
@@ -162,7 +170,7 @@ def run_cmake():
         )
 
     zephyr_env = environ.copy()
-    populate_zephyr_env_vars(zephyr_env, platform_name, board)
+    populate_zephyr_env_vars(zephyr_env, board)
 
     result = exec_command(cmake_cmd, env=zephyr_env)
     if result["returncode"] != 0:
@@ -676,14 +684,16 @@ final_ld_script = get_linkerscript_final_cmd(app_includes, base_ld_script)
 preliminary_ld_script = get_linkerscript_cmd(app_includes, base_ld_script)
 
 offsets_lib = build_offsets_lib(target_configs)
+syscall_files = generate_syscall_files(parse_syscalls()),
 add_ordered_dependency(final_ld_script, offsets_lib)
 add_ordered_dependency(preliminary_ld_script, offsets_lib)
+add_ordered_dependency(offsets_lib, syscall_files)
 
 preliminary_elf_path = join("$BUILD_DIR", "firmware-pre.elf")
 env.Depends(preliminary_elf_path, join(BUILD_DIR, "libkernel.a"))
 
 pre_elf_targets = (
-    generate_syscall_files(parse_syscalls()),
+    syscall_files,
     generate_syscall_macro_header(),
     generate_kobject_files(),
     preliminary_ld_script,
@@ -693,6 +703,7 @@ for dep in pre_elf_targets:
     add_ordered_dependency(preliminary_elf_path, dep)
 
 final_elf_targets = (
+    syscall_files,
     final_ld_script,
     generate_isr_table_file_cmd(preliminary_elf_path, board, env.subst("$PIOPLATFORM")),
     compile_source_files(target_configs["zephyr_final"]),
@@ -708,6 +719,7 @@ libs = [
 ]
 
 libs.append(offsets_lib)
+app_includes.append(join("$BUILD_DIR", "zephyr", "include", "generated"))
 
 env.Replace(ARFLAGS=["qc"])
 env.Prepend(_LIBFLAGS="-Wl,--whole-archive ")
@@ -764,8 +776,8 @@ env.Append(
 
 env.AppendUnique(**get_firmware_flags(app_config, prebuilt_config))
 
-if board.get("build.cpu", "").lower().startswith("cortex"):
+if get_platform_architecture(board) == "arm":
     env.Replace(
-        SIZEPROGREGEXP=r"^(?:text|_TEXT_SECTION_NAME_2|sw_isr_table|devconfig|devconfig|rodata|\.ARM.exidx)\s+(\d+).*",
+        SIZEPROGREGEXP=r"^(?:text|_TEXT_SECTION_NAME_2|sw_isr_table|devconfig|rodata|\.ARM.exidx)\s+(\d+).*",
         SIZEDATAREGEXP=r"^(?:datas|bss|noinit|initlevel|_k_mutex_area|_k_stack_area)\s+(\d+).*",
     )
