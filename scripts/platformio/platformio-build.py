@@ -739,7 +739,6 @@ for target, target_config in target_configs.items():
         for d in target_config.get("dependencies", [])
     ):
         env.Depends(lib[0].sources, offset_header_file)
-        env.Requires(lib[0].sources, offset_header_file)
 
 # Offsets library compiled separately as it requires additional dependencies
 offsets_lib = build_offsets_lib(target_configs)
