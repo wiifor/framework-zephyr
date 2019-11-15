@@ -46,7 +46,8 @@ BUILD_DIR = env.subst("$BUILD_DIR")
 CMAKE_API_DIR = os.path.join(BUILD_DIR, ".cmake", "api", "v1")
 CMAKE_API_QUERY_DIR = os.path.join(CMAKE_API_DIR, "query")
 CMAKE_API_REPLY_DIR = os.path.join(CMAKE_API_DIR, "reply")
-PLATFORMS_WITH_EXTERNAL_HAL = ("ststm32", "nordicnrf52")
+PLATFORMS_WITH_EXTERNAL_HAL = ("atmelsam", "freescalekinetis", "ststm32",
+    "siliconlabsefm32", "nordicnrf51", "nordicnrf52", "nxplpc")
 
 
 def get_board_architecture(board_config):
