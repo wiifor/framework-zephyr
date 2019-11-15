@@ -510,7 +510,7 @@ def prepare_build_envs(config):
         sys_includes = []
         for inc in cg.get("includes", []):
             inc_path = inc["path"]
-            if inc.get("isSystem", True):
+            if inc.get("isSystem", False):
                 sys_includes.append(inc_path)
             else:
                 includes.append(inc_path)
@@ -547,6 +547,8 @@ def compile_source_files(config):
         config_name = config_name.replace("..__", "")
     objects = []
     for source in config.get("sources", []):
+        if source["path"].endswith(".rule"):
+            continue
         compile_group_idx = source.get("compileGroupIndex")
         if compile_group_idx is not None:
             objects.append(
@@ -566,9 +568,23 @@ def compile_source_files(config):
 
 
 def get_app_includes(app_config):
-    return [
-        inc.get("path") for inc in app_config["compileGroups"][0].get("includes", [])
-    ]
+    plain_includes = []
+    sys_includes = []
+    cg = app_config["compileGroups"][0]
+    for inc in cg.get("includes", []):
+        inc_path = inc["path"]
+        if inc.get("isSystem", False):
+            sys_includes.append(inc_path)
+        else:
+            plain_includes.append(inc_path)
+
+    plain_includes.append(os.path.join(
+        env.subst("$BUILD_DIR"), "zephyr", "include", "generated"))
+
+    return {
+        "plain_includes": plain_includes,
+        "sys_includes": sys_includes
+    }
 
 
 def get_app_defines(app_config):
@@ -711,9 +727,10 @@ offset_header_file = generate_offset_header_file_cmd()
 #
 
 app_includes = get_app_includes(app_config)
-base_ld_script = find_base_ldscript(app_includes)
-final_ld_script = get_linkerscript_final_cmd(app_includes, base_ld_script)
-preliminary_ld_script = get_linkerscript_cmd(app_includes, base_ld_script)
+base_ld_script = find_base_ldscript(app_includes["plain_includes"])
+final_ld_script = get_linkerscript_final_cmd(
+    app_includes["plain_includes"], base_ld_script)
+preliminary_ld_script = get_linkerscript_cmd(app_includes["plain_includes"], base_ld_script)
 
 env.Depends(final_ld_script, offset_header_file)
 env.Depends(preliminary_ld_script, offset_header_file)
@@ -755,7 +772,6 @@ for dep in (offsets_lib, preliminary_ld_script):
 
 isr_table_file = generate_isr_table_file_cmd(preliminary_elf_path, board)
 
-
 #
 # Final elf target
 #
@@ -771,10 +787,7 @@ libs = [
     framework_libs_map[d["id"]]
     for d in prebuilt_config.get("dependencies", [])
     if framework_libs_map.get(d["id"], {}) and not d["id"].startswith(("kernel", "app"))
-]
-
-libs.append(offsets_lib)
-app_includes.append(os.path.join("$BUILD_DIR", "zephyr", "include", "generated"))
+] + [offsets_lib]
 
 env.Replace(ARFLAGS=["qc"])
 env.Prepend(_LIBFLAGS="-Wl,--whole-archive ")
@@ -782,9 +795,10 @@ env.Prepend(_LIBFLAGS="-Wl,--whole-archive ")
 # Note: libc and kernel libraries must be placed explicitly after zephyr libraries
 # outside of whole-archive flag
 env.Append(
-    PIOBUILDFILES=compile_source_files(prebuilt_config),
-    CPPPATH=app_includes,
+    CPPPATH=app_includes["plain_includes"],
     CPPDEFINES=get_app_defines(app_config),
+    CCFLAGS=[("-isystem", inc) for inc in app_includes.get("sys_includes", [])],
+    PIOBUILDFILES=compile_source_files(prebuilt_config),
     LIBS=sorted(libs),
     _LIBFLAGS=" -Wl,--no-whole-archive -lkernel -lgcc",
     BUILDERS=dict(
