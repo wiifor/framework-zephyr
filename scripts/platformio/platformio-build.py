@@ -102,7 +102,8 @@ def populate_zephyr_env_vars(zephyr_env, board_config):
 
 def is_proper_zephyr_project():
     project_dir = env.subst("$PROJECT_DIR")
-    cmakelist_present = os.path.isfile(os.path.join(project_dir, "CMakeLists.txt"))
+    cmakelist_present = os.path.isfile(os.path.join(
+        project_dir, "zephyr", "CMakeLists.txt"))
     return cmakelist_present
 
 
@@ -111,28 +112,29 @@ def create_default_project_files():
 include($ENV{ZEPHYR_BASE}/cmake/app/boilerplate.cmake NO_POLICY_SCOPE)
 project(%s)
 
-FILE(GLOB app_sources src/*.c*)
+FILE(GLOB app_sources ../src/*.c*)
 target_sources(app PRIVATE ${app_sources})
 """
 
     project_dir = env.subst("$PROJECT_DIR")
-    cmake_txt_file = os.path.join(project_dir, "CMakeLists.txt")
+    cmake_txt_file = os.path.join(project_dir, "zephyr", "CMakeLists.txt")
     if not os.path.isfile(cmake_txt_file):
+        os.makedirs(os.path.dirname(cmake_txt_file))
         with open(cmake_txt_file, "w") as fp:
             fp.write(cmake_tpl % os.path.basename(project_dir))
 
-    if len(os.listdir(os.path.join(env.subst("$PROJECT_SRC_DIR")))) == 0:
+    if not os.listdir(os.path.join(env.subst("$PROJECT_SRC_DIR"))):
         # create an empty file to make CMake happy during first init
         open(os.path.join(env.subst("$PROJECT_SRC_DIR"), "empty.c"), "a").close()
 
 
 def is_cmake_reconfigure_required():
     cmake_cache_file = os.path.join(BUILD_DIR, "CMakeCache.txt")
-    cmake_txt_file = os.path.join(env.subst("$PROJECT_DIR"), "CMakeLists.txt")
+    cmake_txt_file = os.path.join(env.subst("$PROJECT_DIR"), "zephyr", "CMakeLists.txt")
     cmake_preconf_dir = os.path.join(BUILD_DIR, "zephyr", "include", "generated")
 
     for d in (CMAKE_API_REPLY_DIR, cmake_preconf_dir):
-        if not os.path.isdir(d) or len(os.listdir(d)) == 0:
+        if not os.path.isdir(d) or not os.listdir(d):
             return True
     if not os.path.isfile(cmake_cache_file):
         return True
@@ -150,7 +152,7 @@ def run_cmake():
     cmake_cmd = [
         os.path.join(platform.get_package_dir("tool-cmake") or "", "bin", "cmake"),
         "-S",
-        env.subst("$PROJECT_DIR"),
+        os.path.join(env.subst("$PROJECT_DIR"), "zephyr"),
         "-B",
         BUILD_DIR,
         "-G",
@@ -196,7 +198,7 @@ def get_cmake_code_model():
 
     if (
         not os.path.isdir(CMAKE_API_REPLY_DIR)
-        or len(os.listdir(CMAKE_API_REPLY_DIR)) == 0
+        or not os.listdir(CMAKE_API_REPLY_DIR)
     ):
         sys.stderr.write("Error: Couldn't find CMake API response file\n")
         env.Exit(1)
