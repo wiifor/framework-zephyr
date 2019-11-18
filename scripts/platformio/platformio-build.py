@@ -46,8 +46,16 @@ BUILD_DIR = env.subst("$BUILD_DIR")
 CMAKE_API_DIR = os.path.join(BUILD_DIR, ".cmake", "api", "v1")
 CMAKE_API_QUERY_DIR = os.path.join(CMAKE_API_DIR, "query")
 CMAKE_API_REPLY_DIR = os.path.join(CMAKE_API_DIR, "reply")
-PLATFORMS_WITH_EXTERNAL_HAL = ("atmelsam", "freescalekinetis", "ststm32",
-    "siliconlabsefm32", "nordicnrf51", "nordicnrf52", "nxplpc")
+
+PLATFORMS_WITH_EXTERNAL_HAL = {
+    "atmelsam": "atmel",
+    "freescalekinetis": "nxp",
+    "ststm32": "stm32",
+    "siliconlabsefm32": "silabs",
+    "nordicnrf51": "nordic",
+    "nordicnrf52": "nordic",
+    "nxplpc": "nxp"
+}
 
 
 def get_board_architecture(board_config):
@@ -162,12 +170,13 @@ def run_cmake():
     ]
 
     platform_name = env.subst("$PIOPLATFORM")
-    if platform_name in PLATFORMS_WITH_EXTERNAL_HAL:
+    if platform_name in PLATFORMS_WITH_EXTERNAL_HAL.keys():
         cmake_cmd.extend(
             [
                 "-D",
                 "ZEPHYR_MODULES="
-                + platform.get_package_dir("framework-zephyr-hal-" + platform_name),
+                + platform.get_package_dir(
+                    "framework-zephyr-hal-" + PLATFORMS_WITH_EXTERNAL_HAL[platform_name]),
             ]
         )
 
