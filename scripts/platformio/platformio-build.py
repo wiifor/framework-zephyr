@@ -74,7 +74,7 @@ def get_board_architecture(board_config):
 
 
 def populate_zephyr_env_vars(zephyr_env, board_config):
-    toolchain_variant = "UKNOWN"
+    toolchain_variant = "UNKNOWN"
     arch = get_board_architecture(board_config)
     if arch == "arm":
         toolchain_variant = "gnuarmemb"
@@ -534,7 +534,6 @@ def prepare_build_envs(config):
             build_flags = cc.get("fragment")
             build_env.AppendUnique(**build_env.ParseFlags(build_flags))
             build_env.Append(
-                ASFLAGS=build_env.get("CCFLAGS", [])[:],
                 CPPDEFINES=defines,
                 CPPPATH=includes,
             )
@@ -611,11 +610,15 @@ def get_firmware_flags(app_config, main_config):
     for cg in app_config["compileGroups"]:
         app_flags.update(env.ParseFlags(cg["compileCommandFragments"][0]["fragment"]))
 
+    standard_libs = ("-lgcc", "-lc", "-lm")
+    app_link_flags = extract_link_flags(main_config)
+
+
     # Ignore ld script flags as they'll be specified in a special place
     app_flags["LINKFLAGS"] = [
         f
-        for f in extract_link_flags(main_config)
-        if not f.endswith(".cmd") and f != "-T" and f != "-lgcc"
+        for f in app_link_flags
+        if not f.endswith(".cmd") and f != "-T" and f not in standard_libs
     ]
 
     return app_flags
@@ -799,7 +802,7 @@ libs = [
     framework_libs_map[d["id"]]
     for d in prebuilt_config.get("dependencies", [])
     if framework_libs_map.get(d["id"], {}) and not d["id"].startswith(("kernel", "app"))
-] + [offsets_lib]
+]
 
 env.Replace(ARFLAGS=["qc"])
 env.Prepend(_LIBFLAGS="-Wl,--whole-archive ")
@@ -811,8 +814,8 @@ env.Append(
     CPPDEFINES=get_app_defines(app_config),
     CCFLAGS=[("-isystem", inc) for inc in app_includes.get("sys_includes", [])],
     PIOBUILDFILES=compile_source_files(prebuilt_config),
-    LIBS=sorted(libs),
-    _LIBFLAGS=" -Wl,--no-whole-archive -lkernel -lgcc",
+    LIBS=sorted(libs) + [offsets_lib],
+    _LIBFLAGS=" -Wl,--no-whole-archive -lkernel -lc -lm -lgcc",
     BUILDERS=dict(
         ElfToBin=Builder(
             action=env.VerboseAction(
