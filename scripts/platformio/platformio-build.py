@@ -606,22 +606,44 @@ def get_app_defines(app_config):
 
 def get_firmware_flags(app_config, main_config):
     # Use the first compile commands group
+    result = {}
     app_flags = {}
     for cg in app_config["compileGroups"]:
-        app_flags.update(env.ParseFlags(cg["compileCommandFragments"][0]["fragment"]))
+        app_flags[cg["language"]] = env.ParseFlags(
+            cg["compileCommandFragments"][0]["fragment"])
+
+    if "C" in app_flags.keys():
+        result.update(app_flags["C"])
+    if "CXX" in app_flags.keys():
+        cxx_section = app_flags["CXX"]
+        if not result.get("CCFLAGS", []):
+            result.update(cxx_section)
+        else:
+            # Flags that are not present in CC and CXX sections
+            cflags = set(result["CCFLAGS"]) - set(cxx_section["CCFLAGS"])
+            # Flags that are not present in C and CC sections
+            cxx_flags = set(cxx_section["CCFLAGS"]) - set(result["CCFLAGS"])
+            # Common flags for both C and CXX sections
+            ccflags = set(result["CCFLAGS"]) - cxx_flags - cflags
+            result["CFLAGS"].extend(list(cflags))
+            result["CXXFLAGS"] = list(cxx_flags) + cxx_section["CXXFLAGS"]
+            result["CCFLAGS"] = list(ccflags)
+
+    if not result:
+        sys.stderr.write("Error: No build flags found for app target\n")
+        env.Exit(1)
 
     standard_libs = ("-lgcc", "-lc", "-lm")
     app_link_flags = extract_link_flags(main_config)
 
-
-    # Ignore ld script flags as they'll be specified in a special place
-    app_flags["LINKFLAGS"] = [
+    # Ignore ld script and standard libraries as they'll be specified in a special place
+    result["LINKFLAGS"] = [
         f
         for f in app_link_flags
         if not f.endswith(".cmd") and f != "-T" and f not in standard_libs
     ]
 
-    return app_flags
+    return result
 
 
 def generate_isr_list_binary(preliminary_elf, board):
