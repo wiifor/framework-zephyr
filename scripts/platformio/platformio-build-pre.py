@@ -26,6 +26,11 @@ def ZephyrBuildProgram(env):
     # append into the beginning a main LD script
     env.Prepend(LINKFLAGS=["-T", "$LDSCRIPT_PATH"])
 
+    # enable "cyclic reference" for linker
+    if env.get("LIBS") and env.GetCompilerType() == "gcc":
+        env.Prepend(_LIBFLAGS="-Wl,--start-group ")
+        env.Append(_LIBFLAGS=" -Wl,--end-group")
+
     program_pre = env.Program(
         os.path.join("$BUILD_DIR", "firmware-pre"), env["PIOBUILDFILES"],
         LDSCRIPT_PATH=os.path.join("$BUILD_DIR", "zephyr", "linker.cmd")
