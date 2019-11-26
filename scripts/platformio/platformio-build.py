@@ -191,6 +191,7 @@ def run_cmake():
 
     if int(ARGUMENTS.get("PIOVERBOSE", 0)):
         print(result["out"])
+        print(result["err"])
 
 
 def get_cmake_code_model():
@@ -562,16 +563,19 @@ def compile_source_files(config):
             continue
         compile_group_idx = source.get("compileGroupIndex")
         if compile_group_idx is not None:
+            src_path = source.get("path")
+            if not os.path.isabs(source.get("path")):
+                # For cases when sources are located near CMakeLists.txt
+                src_path = os.path.join(env.subst("$PROJECT_DIR"), "zephyr", src_path)
             objects.append(
                 build_envs[compile_group_idx].StaticObject(
                     target=os.path.join(
                         "$BUILD_DIR",
-                        "zephyr",
                         config_name,
-                        os.path.basename(os.path.dirname(source.get("path"))),
-                        os.path.basename(source.get("path")) + ".o",
+                        os.path.basename(os.path.dirname(src_path)),
+                        os.path.basename(src_path) + ".o",
                     ),
-                    source=os.path.realpath(source.get("path")),
+                    source=os.path.realpath(src_path),
                 )
             )
 
@@ -628,6 +632,8 @@ def get_firmware_flags(app_config, main_config):
             result["CFLAGS"].extend(list(cflags))
             result["CXXFLAGS"] = list(cxx_flags) + cxx_section["CXXFLAGS"]
             result["CCFLAGS"] = list(ccflags)
+    if "ASM" in app_flags.keys():
+        result["ASFLAGS"] = list(app_flags["CCFLAGS"])
 
     if not result:
         sys.stderr.write("Error: No build flags found for app target\n")
@@ -709,7 +715,7 @@ def generate_offset_header_file_cmd():
 
     return env.Command(
         os.path.join("$BUILD_DIR", "zephyr", "include", "generated", "offsets.h"),
-        os.path.join("$BUILD_DIR", "zephyr", "offsets", "offsets", "offsets.c.o"),
+        os.path.join("$BUILD_DIR", "offsets", "offsets", "offsets.c.o"),
         env.VerboseAction(
             " ".join(cmd), "Generating header file with offsets $TARGET",
         ),
