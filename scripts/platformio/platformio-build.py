@@ -721,7 +721,8 @@ def generate_offset_header_file_cmd():
     return env.Command(
         os.path.join("$BUILD_DIR", "zephyr", "include", "generated", "offsets.h"),
         os.path.join(
-            "$BUILD_DIR", "offsets", "arch", "arm", "core", "offsets", "offsets.c.o"),
+            "$BUILD_DIR", "offsets", "arch", get_board_architecture(board), "core",
+            "offsets", "offsets.c.o"),
         env.VerboseAction(
             " ".join(cmd), "Generating header file with offsets $TARGET",
         ),
