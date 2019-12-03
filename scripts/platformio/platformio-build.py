@@ -775,7 +775,7 @@ offset_header_file = generate_offset_header_file_cmd()
 # LD scripts processing
 #
 
-app_includes = get_app_includes(app_config)
+app_includes = get_app_includes(prebuilt_config)
 base_ld_script = find_base_ldscript(app_includes["plain_includes"])
 final_ld_script = get_linkerscript_final_cmd(
     app_includes["plain_includes"], base_ld_script)
