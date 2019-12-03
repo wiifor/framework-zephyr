@@ -247,7 +247,7 @@ def get_target_elf_arch(board_config):
 
 def build_library(lib_config):
     lib_objects = compile_source_files(lib_config)
-    lib_name = lib_config["name"]
+    lib_name = lib_config["name"].split("__")[-1]
     if lib_name.startswith("..__"):
         lib_name = lib_name.replace("..__", "")
 
@@ -554,9 +554,13 @@ def prepare_build_envs(config):
 
 def compile_source_files(config):
     build_envs = prepare_build_envs(config)
-    config_name = config["name"]
+    config_name = config["name"].split("__")[-1]
     if config_name.startswith("..__"):
         config_name = config_name.replace("..__", "")
+    config_path = config["paths"]["source"]
+    if not os.path.isabs(config_path):
+        # For cases when sources are located near CMakeLists.txt
+        config_path = os.path.join(env.subst("$PROJECT_DIR"), "zephyr", config_path)
     objects = []
     for source in config.get("sources", []):
         if source["path"].endswith(".rule"):
@@ -567,14 +571,15 @@ def compile_source_files(config):
             if not os.path.isabs(source.get("path")):
                 # For cases when sources are located near CMakeLists.txt
                 src_path = os.path.join(env.subst("$PROJECT_DIR"), "zephyr", src_path)
+            if config_path not in src_path:
+                obj_path = os.path.join("$BUILD_DIR", config_name, os.path.basename(
+                    os.path.dirname(src_path)), os.path.basename(src_path) + ".o")
+            else:
+                obj_path = os.path.join("$BUILD_DIR", config_name, os.path.relpath(
+                    src_path, config_path) + ".o")
             objects.append(
                 build_envs[compile_group_idx].StaticObject(
-                    target=os.path.join(
-                        "$BUILD_DIR",
-                        config_name,
-                        os.path.basename(os.path.dirname(src_path)),
-                        os.path.basename(src_path) + ".o",
-                    ),
+                    target=obj_path,
                     source=os.path.realpath(src_path),
                 )
             )
@@ -715,7 +720,8 @@ def generate_offset_header_file_cmd():
 
     return env.Command(
         os.path.join("$BUILD_DIR", "zephyr", "include", "generated", "offsets.h"),
-        os.path.join("$BUILD_DIR", "offsets", "offsets", "offsets.c.o"),
+        os.path.join(
+            "$BUILD_DIR", "offsets", "arch", "arm", "core", "offsets", "offsets.c.o"),
         env.VerboseAction(
             " ".join(cmd), "Generating header file with offsets $TARGET",
         ),
