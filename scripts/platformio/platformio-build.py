@@ -36,6 +36,8 @@ except ImportError:
         )
     )
 
+    import yaml
+
 platform = env.PioPlatform()
 board = env.BoardConfig()
 
