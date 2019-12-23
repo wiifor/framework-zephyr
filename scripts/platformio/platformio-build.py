@@ -181,6 +181,7 @@ def run_cmake():
         "Ninja",
         "-DBOARD=%s" % get_zephyr_target(board),
         "-DPYTHON_EXECUTABLE:FILEPATH=%s" % env.subst("$PYTHONEXE"),
+        "-DPIO_PACKAGES_DIR:PATH=%s" % env.subst("$PROJECT_PACKAGES_DIR"),
     ]
 
     zephyr_modules = []
@@ -289,6 +290,21 @@ def get_target_config(project_configs, target_index):
 
     with open(target_config_file) as fp:
         return json.load(fp)
+
+
+def generate_includible_file(source_file):
+    cmd = [
+        "$PYTHONEXE",
+        '"%s"' % os.path.join(FRAMEWORK_DIR, "scripts", "file2hex.py"),
+        "--file", "$SOURCE", ">", "$TARGET",
+    ]
+
+    return env.Command(
+        os.path.join(
+            "$BUILD_DIR", "zephyr", "include", "generated", "${SOURCE.file}.inc"),
+        env.File(source_file),
+        env.VerboseAction(" ".join(cmd), "Generating file $TARGET"),
+    )
 
 
 def generate_kobject_files():
@@ -540,6 +556,10 @@ def load_target_configurations(cmake_codemodel):
     return configs
 
 
+def extract_defines(compile_group):
+    return [d.get("define").replace(
+        "\"", "\\\"") for d in compile_group.get("defines", [])]
+
 def prepare_build_envs(config):
     build_envs = []
     target_compile_groups = config.get("compileGroups")
@@ -558,7 +578,7 @@ def prepare_build_envs(config):
             else:
                 includes.append(inc_path)
 
-        defines = [inc.get("define") for inc in cg.get("defines", [])]
+        defines = extract_defines(cg)
         compile_commands = cg.get("compileCommandFragments", [])
         for cc in compile_commands:
             build_env = env.Clone()
@@ -638,9 +658,7 @@ def get_app_includes(app_config):
 
 
 def get_app_defines(app_config):
-    return [
-        inc.get("define") for inc in app_config["compileGroups"][0].get("defines", [])
-    ]
+    return extract_defines(app_config["compileGroups"][0])
 
 
 def get_firmware_flags(app_config, main_config):
@@ -815,6 +833,25 @@ preliminary_ld_script = get_linkerscript_cmd(app_includes["plain_includes"], bas
 env.Depends(final_ld_script, offset_header_file)
 env.Depends(preliminary_ld_script, offset_header_file)
 
+
+#
+# Includible files processing
+#
+
+if "generate_inc_file_for_target" in app_config.get("backtraceGraph", {}).get(
+    "commands", []) and "build.embed_files" not in board:
+    print("Warning! Detected a custom CMake command for embedding files. Please use "
+          "'board_build.embed_files' option in 'platformio.ini' to include files!")
+
+if "build.embed_files" in board:
+    for f in board.get("build.embed_files", "").split():
+        file = os.path.join("$PROJECT_DIR", f)
+        if not os.path.isfile(env.subst(f)):
+            print("Warning! Could not find file \"%s\"" % os.path.basename(f)) 
+            continue
+
+        env.Depends(offset_header_file, generate_includible_file(file))
+
 #
 # Libraries processing
 #
@@ -880,7 +917,7 @@ env.Append(
     CCFLAGS=[("-isystem", inc) for inc in app_includes.get("sys_includes", [])],
     PIOBUILDFILES=compile_source_files(prebuilt_config),
     LIBS=sorted(libs) + [offsets_lib],
-    _LIBFLAGS=" -Wl,--no-whole-archive -lkernel -lc -lm -lgcc",
+    _LIBFLAGS=" -Wl,--no-whole-archive -lkernel -lgcc",
     BUILDERS=dict(
         ElfToBin=Builder(
             action=env.VerboseAction(
