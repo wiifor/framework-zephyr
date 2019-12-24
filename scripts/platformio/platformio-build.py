@@ -408,31 +408,6 @@ def generate_syscall_files(syscalls_json):
                 BUILD_DIR, "zephyr", "include", "generated", "syscall_dispatch.c"
             ),
             os.path.join(BUILD_DIR, "zephyr", "include", "generated", "syscall_list.h"),
-            os.path.join(
-                "$BUILD_DIR",
-                "zephyr",
-                "include",
-                "generated",
-                "syscalls",
-                "errno_private.h",
-            ),
-            os.path.join(
-                "$BUILD_DIR", "zephyr", "include", "generated", "syscalls", "atomic.h"
-            ),
-            os.path.join(
-                "$BUILD_DIR", "zephyr", "include", "generated", "syscalls", "device.h"
-            ),
-            os.path.join(
-                "$BUILD_DIR", "zephyr", "include", "generated", "syscalls", "kernel.h"
-            ),
-            os.path.join(
-                "$BUILD_DIR",
-                "zephyr",
-                "include",
-                "generated",
-                "syscalls",
-                "sys_clock.h",
-            ),
         ],
         syscalls_json,
         env.VerboseAction(" ".join(cmd), "Generating syscall files"),
