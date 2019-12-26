@@ -105,9 +105,7 @@ def populate_zephyr_env_vars(zephyr_env, board_config):
     if "windows" not in get_systype():
         additional_packages.append(platform.get_package_dir("tool-gperf"))
 
-    zephyr_env["PATH"] = (
-        str(env["ENV"]["PATH"]) + os.pathsep + os.pathsep.join(additional_packages)
-    )
+    zephyr_env["PATH"] = os.pathsep.join(additional_packages)
 
 
 def is_proper_zephyr_project():
