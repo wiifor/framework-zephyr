@@ -634,6 +634,10 @@ def get_app_defines(app_config):
     return extract_defines(app_config["compileGroups"][0])
 
 
+def get_used_std_libs(config):
+    return [f for f in extract_link_flags(config) if f.startswith("-l")]
+
+
 def get_firmware_flags(app_config, main_config):
     # Use the first compile commands group
     result = {}
@@ -665,14 +669,13 @@ def get_firmware_flags(app_config, main_config):
         sys.stderr.write("Error: No build flags found for app target\n")
         env.Exit(1)
 
-    standard_libs = ("-lgcc", "-lc", "-lm")
     app_link_flags = extract_link_flags(main_config)
 
     # Ignore ld script and standard libraries as they'll be specified in a special place
     result["LINKFLAGS"] = [
         f
         for f in app_link_flags
-        if not f.endswith(".cmd") and f != "-T" and f not in standard_libs
+        if not f.endswith(".cmd") and f != "-T" and not f.startswith("-l")
     ]
 
     return result
@@ -890,7 +893,8 @@ env.Append(
     CCFLAGS=[("-isystem", inc) for inc in app_includes.get("sys_includes", [])],
     PIOBUILDFILES=compile_source_files(prebuilt_config),
     LIBS=sorted(libs) + [offsets_lib],
-    _LIBFLAGS=" -Wl,--no-whole-archive -lkernel -lgcc",
+    _LIBFLAGS=" -Wl,--no-whole-archive -lkernel " + " ".join(
+        get_used_std_libs(prebuilt_config)),
     BUILDERS=dict(
         ElfToBin=Builder(
             action=env.VerboseAction(
