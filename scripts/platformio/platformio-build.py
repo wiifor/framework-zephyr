@@ -31,7 +31,7 @@ try:
 except ImportError:
     env.Execute(
         env.VerboseAction(
-            "$PYTHONEXE -m pip install pyyaml pykwalify",
+            "$PYTHONEXE -m pip install pyyaml pykwalify six",
             "Installing Zephyr's Python dependencies",
         )
     )
