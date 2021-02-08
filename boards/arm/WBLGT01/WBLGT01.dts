@@ -210,14 +210,14 @@
 };
 
 //Uart to grove
-/*
-&uart1 {
+
+/* &uart1 {
 	current-speed = <115200>;
 	status = "okay";
 	tx-pin = <3>;
 	rx-pin = <46>;
-};
-*/
+}; */
+
 
 &i2c0 {
 	compatible = "nordic,nrf-twi";
@@ -229,6 +229,11 @@
 		reg = <0x68>;
 		int-gpios = <&gpio0 11 0>;
 		label = "BMI160";
+	};
+	bme280:bme280@76 {
+		compatible = "bosch,bme280";
+		reg = <0x76>;
+		label = "BME280";
 	};
 };
 
