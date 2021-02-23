@@ -13,6 +13,7 @@
 #include <init.h>
 #include <drivers/i2c.h>
 #include <drivers/sensor.h>
+#include <drivers/sensor/bmi160.h>
 #include <sys/byteorder.h>
 #include <kernel.h>
 #include <sys/__assert.h>
@@ -175,55 +176,80 @@ int bmi160_reg_field_update(const struct device *dev, uint8_t reg_addr,
 				 (old_val & ~mask) | ((val << pos) & mask));
 }
 
-static int bmi160_pmu_set(const struct device *dev,
-			  union bmi160_pmu_status *pmu_sts)
+static int bmi160_pmu_set(const struct device *dev, enum sensor_channel chan,
+			  uint8_t pmu_mode)
 {
-	struct {
-		uint8_t cmd;
-		uint16_t delay_us; /* values taken from page 82 */
-	} cmds[] = {
-		{BMI160_CMD_PMU_MAG | pmu_sts->mag, 350},
-		{BMI160_CMD_PMU_ACC | pmu_sts->acc, 3200},
-		{BMI160_CMD_PMU_GYR | pmu_sts->gyr, 55000}
-	};
-	size_t i;
+	struct bmi160_data *bmi160 = dev->data;
+	union bmi160_pmu_status sts;
+	bool pmu_set = false;
 
-	for (i = 0; i < ARRAY_SIZE(cmds); i++) {
-		union bmi160_pmu_status sts;
-		bool pmu_set = false;
+	/* Values taken from § "Register (0x7E) CMD" of BMI160 datasheet */
+	const uint16_t system_startup_delay_us = 300;
+	uint16_t sensor_delay_us;
+	uint8_t cmd;
 
-		if (bmi160_byte_write(dev, BMI160_REG_CMD, cmds[i].cmd) < 0) {
+	switch (chan) {
+	case SENSOR_CHAN_MAGN_XYZ:
+		bmi160->pmu_sts.mag = pmu_mode;
+		cmd = BMI160_CMD_PMU_MAG | bmi160->pmu_sts.mag;
+		sensor_delay_us = 350;
+		break;
+	case SENSOR_CHAN_ACCEL_XYZ:
+		bmi160->pmu_sts.acc = pmu_mode;
+		cmd = BMI160_CMD_PMU_ACC | bmi160->pmu_sts.acc;
+		sensor_delay_us = 3200;
+		break;
+	case SENSOR_CHAN_GYRO_XYZ:
+		bmi160->pmu_sts.gyr = pmu_mode;
+		cmd = BMI160_CMD_PMU_GYR | bmi160->pmu_sts.gyr;
+		sensor_delay_us = 55000;
+		break;
+	default:
+		return -ENOTSUP;
+		break;
+	}
+
+	if (bmi160_byte_write(dev, BMI160_REG_CMD, cmd) < 0) {
+		return -EIO;
+	}
+
+	/*
+	 * Cannot use a timer here since this can be called from the
+	 * init function where the timeouts were not initialized yet.
+	 */
+	k_busy_wait(system_startup_delay_us + sensor_delay_us);
+
+	/* Make sure the PMU_STATUS was set, though */
+	do {
+		if (bmi160_byte_read(dev, BMI160_REG_PMU_STATUS, &sts.raw) <
+		    0) {
 			return -EIO;
 		}
 
-		/*
-		 * Cannot use a timer here since this is called from the
-		 * init function and the timeouts were not initialized yet.
-		 */
-		k_busy_wait(cmds[i].delay_us);
+		switch (chan) {
+		case SENSOR_CHAN_MAGN_XYZ:
+			pmu_set = (bmi160->pmu_sts.mag == sts.mag);
+			break;
+		case SENSOR_CHAN_ACCEL_XYZ:
+			pmu_set = (bmi160->pmu_sts.acc == sts.acc);
+			break;
+		case SENSOR_CHAN_GYRO_XYZ:
+			pmu_set = (bmi160->pmu_sts.gyr == sts.gyr);
+			break;
+		default:
+			break;
+		}
+	} while (!pmu_set);
 
-		/* make sure the PMU_STATUS was set, though */
-		do {
-			if (bmi160_byte_read(dev, BMI160_REG_PMU_STATUS,
-					     &sts.raw) < 0) {
-				return -EIO;
-			}
-
-			if (i == 0) {
-				pmu_set = (pmu_sts->mag == sts.mag);
-			} else if (i == 1) {
-				pmu_set = (pmu_sts->acc == sts.acc);
-			} else {
-				pmu_set = (pmu_sts->gyr == sts.gyr);
-			}
-
-		} while (!pmu_set);
+	if (chan == SENSOR_CHAN_ACCEL_XYZ) {
+		/* Set the undersampling flag for accelerometer */
+		return bmi160_reg_field_update(
+			dev, BMI160_REG_ACC_CONF, BMI160_ACC_CONF_US_POS,
+			BMI160_ACC_CONF_US_MASK,
+			bmi160->pmu_sts.acc != BMI160_PMU_NORMAL);
 	}
 
-	/* set the undersampling flag for accelerometer */
-	return bmi160_reg_field_update(dev, BMI160_REG_ACC_CONF,
-				       BMI160_ACC_CONF_US_POS, BMI160_ACC_CONF_US_MASK,
-				       pmu_sts->acc != BMI160_PMU_NORMAL);
+	return 0;
 }
 
 #if defined(CONFIG_BMI160_GYRO_ODR_RUNTIME) ||\
@@ -489,6 +515,20 @@ static int bmi160_acc_config(const struct device *dev,
 			     enum sensor_attribute attr,
 			     const struct sensor_value *val)
 {
+	/* Check BMI160 private attribute types */
+	switch ((enum bmi610_sensor_attribute)attr) {
+#if defined(CONFIG_BMI160_ACCEL_PMU_RUNTIME)
+	case SENSOR_ATTR_BMI160_PMU_ACTIVE:
+		return bmi160_pmu_set(dev, chan, BMI160_PMU_NORMAL);
+	case SENSOR_ATTR_BMI160_PMU_LOW_POWER:
+		return bmi160_pmu_set(dev, chan, BMI160_PMU_LOW_POWER);
+	case SENSOR_ATTR_BMI160_PMU_OFF:
+		return bmi160_pmu_set(dev, chan, BMI160_PMU_SUSPEND);
+#endif
+	default:
+		break;
+	}
+
 	switch (attr) {
 #if defined(CONFIG_BMI160_ACCEL_RANGE_RUNTIME)
 	case SENSOR_ATTR_FULL_SCALE:
@@ -648,6 +688,20 @@ static int bmi160_gyr_config(const struct device *dev,
 			     enum sensor_attribute attr,
 			     const struct sensor_value *val)
 {
+	/* Check BMI160 private attribute types */
+	switch ((enum bmi610_sensor_attribute)attr) {
+#if defined(CONFIG_BMI160_GYRO_PMU_RUNTIME)
+	case SENSOR_ATTR_BMI160_PMU_ACTIVE:
+		return bmi160_pmu_set(dev, chan, BMI160_PMU_NORMAL);
+	case SENSOR_ATTR_BMI160_PMU_LOW_POWER:
+		return bmi160_pmu_set(dev, chan, BMI160_PMU_FAST_START);
+	case SENSOR_ATTR_BMI160_PMU_OFF:
+		return bmi160_pmu_set(dev, chan, BMI160_PMU_SUSPEND);
+#endif
+	default:
+		break;
+	}
+
 	switch (attr) {
 #if defined(CONFIG_BMI160_GYRO_RANGE_RUNTIME)
 	case SENSOR_ATTR_FULL_SCALE:
@@ -906,20 +960,27 @@ int bmi160_init(const struct device *dev)
 		return -ENODEV;
 	}
 
-	/* set default PMU for gyro, accelerometer */
-	data->pmu_sts.gyr = BMI160_DEFAULT_PMU_GYR;
-	data->pmu_sts.acc = BMI160_DEFAULT_PMU_ACC;
-	/* compass not supported, yet */
-	data->pmu_sts.mag = BMI160_PMU_SUSPEND;
-
 	/*
+	 * Set default PMU for gyroscope and accelerometer. Compass is not
+	 * supported, yet.
+	 *
 	 * The next command will take around 100ms (contains some necessary busy
 	 * waits), but we cannot do it in a separate thread since we need to
 	 * guarantee the BMI is up and running, before the app's main() is
 	 * called.
 	 */
-	if (bmi160_pmu_set(dev, &data->pmu_sts) < 0) {
-		LOG_DBG("Failed to set power mode.");
+	if (bmi160_pmu_set(dev, SENSOR_CHAN_MAGN_XYZ, BMI160_PMU_SUSPEND) < 0) {
+		LOG_DBG("Failed to set mag power mode.");
+		return -EIO;
+	}
+	if (bmi160_pmu_set(dev, SENSOR_CHAN_ACCEL_XYZ, BMI160_DEFAULT_PMU_ACC) <
+	    0) {
+		LOG_DBG("Failed to set accel power mode.");
+		return -EIO;
+	}
+	if (bmi160_pmu_set(dev, SENSOR_CHAN_GYRO_XYZ, BMI160_DEFAULT_PMU_GYR) <
+	    0) {
+		LOG_DBG("Failed to set gyro power mode.");
 		return -EIO;
 	}
 
