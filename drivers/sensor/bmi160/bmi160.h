@@ -450,17 +450,21 @@ union bmi160_pmu_status {
 
 #if !defined(CONFIG_BMI160_GYRO_PMU_SUSPEND) && \
 		!defined(CONFIG_BMI160_ACCEL_PMU_SUSPEND)
-#	define BMI160_SAMPLE_SIZE	(2 * BMI160_AXES * sizeof(uint16_t))
-#else
-#	define BMI160_SAMPLE_SIZE	(BMI160_AXES * sizeof(uint16_t))
-#endif
-
-#if defined(CONFIG_BMI160_GYRO_PMU_SUSPEND)
-#	define BMI160_SAMPLE_BURST_READ_ADDR	BMI160_REG_DATA_ACC_X
-#	define BMI160_DATA_READY_BIT_MASK	(1 << 7)
-#else
+	/* Data for both accelerometer and gyroscope */
+#	define BMI160_SAMPLE_SIZE				(2 * BMI160_AXES * sizeof(uint16_t))
 #	define BMI160_SAMPLE_BURST_READ_ADDR	BMI160_REG_DATA_GYR_X
-#	define BMI160_DATA_READY_BIT_MASK	(1 << 6)
+#	define BMI160_DATA_READY_BIT_MASK \
+			(BMI160_STATUS_ACC_DRDY | BMI160_STATUS_GYR_DRDY)
+#elif !defined(CONFIG_BMI160_GYRO_PMU_SUSPEND)
+	/* Data for gyroscope only */
+#	define BMI160_SAMPLE_SIZE				(BMI160_AXES * sizeof(uint16_t))
+#	define BMI160_SAMPLE_BURST_READ_ADDR	BMI160_REG_DATA_GYR_X
+#	define BMI160_DATA_READY_BIT_MASK		BMI160_STATUS_GYR_DRDY
+#elif !defined(CONFIG_BMI160_ACCEL_PMU_SUSPEND)
+	/* Data for accelerometer only */
+#	define BMI160_SAMPLE_SIZE				(BMI160_AXES * sizeof(uint16_t))
+#	define BMI160_SAMPLE_BURST_READ_ADDR	BMI160_REG_DATA_ACC_X
+#	define BMI160_DATA_READY_BIT_MASK		BMI160_STATUS_ACC_DRDY
 #endif
 
 #define BMI160_BUF_SIZE			(BMI160_SAMPLE_SIZE)
