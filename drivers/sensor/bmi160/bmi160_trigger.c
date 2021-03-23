@@ -157,7 +157,7 @@ static int bmi160_trigger_anym_set(const struct device *dev,
 				   sensor_trigger_handler_t handler)
 {
 	struct bmi160_data *data = to_data(dev);
-	uint8_t anym_en = 0U;
+	uint8_t anym_en = 0U, anym_int_map = 0U, anym_int_latch = 0U;
 
 	data->handler_anymotion = handler;
 
@@ -165,10 +165,21 @@ static int bmi160_trigger_anym_set(const struct device *dev,
 		anym_en = BMI160_INT_ANYM_X_EN |
 			  BMI160_INT_ANYM_Y_EN |
 			  BMI160_INT_ANYM_Z_EN;
+		anym_int_map = BMI160_INT_MAP_ANYM;
+		anym_int_latch = BMI160_INT_LATCH_2560MS;
+	}
+
+	if (bmi160_byte_write(dev, BMI160_REG_INT_LATCH, anym_int_latch) < 0) {
+		return -EIO;
+	}
+
+	if (bmi160_reg_update(dev, BMI160_REG_INT_MAP0,
+				BMI160_INT_MAP_ANYM, anym_int_map) < 0) {
+		return -EIO;
 	}
 
 	if (bmi160_reg_update(dev, BMI160_REG_INT_EN0,
-			      BMI160_INT_ANYM_MASK, anym_en) < 0) {
+				BMI160_INT_ANYM_MASK, anym_en) < 0) {
 		return -EIO;
 	}
 
@@ -289,8 +300,8 @@ int bmi160_trigger_mode_init(const struct device *dev)
 	data->work.handler = bmi160_work_handler;
 #endif
 
-	/* map all interrupts to INT1 pin */
-	if (bmi160_word_write(dev, BMI160_REG_INT_MAP0, 0xf0ff) < 0) {
+	/* Don't map interrupt on INT1 */
+	if (bmi160_word_write(dev, BMI160_REG_INT_MAP0, 0x0) < 0) {
 		LOG_DBG("Failed to map interrupts.");
 		return -EIO;
 	}
@@ -304,8 +315,9 @@ int bmi160_trigger_mode_init(const struct device *dev)
 
 	gpio_add_callback(data->gpio, &data->gpio_cb);
 	gpio_pin_interrupt_configure(data->gpio, cfg->int_pin,
-				     GPIO_INT_EDGE_TO_ACTIVE);
+				     GPIO_INT_EDGE_RISING);
 
+	/* Enable INT1 interrupt ( active high) */
 	return bmi160_byte_write(dev, BMI160_REG_INT_OUT_CTRL,
-				 BMI160_INT1_OUT_EN | BMI160_INT1_EDGE_CTRL);
+				 BMI160_INT1_OUT_EN | BMI160_INT1_LVL);
 }
