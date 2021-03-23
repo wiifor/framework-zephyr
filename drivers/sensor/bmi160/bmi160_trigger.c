@@ -52,9 +52,15 @@ static void bmi160_handle_drdy(const struct device *dev, uint8_t status)
 static void bmi160_handle_interrupts(const struct device *dev)
 {
 	union {
+#if BMI160_BUS_SPI
 		uint8_t raw[6];
+#else
+		uint8_t raw[5];
+#endif
 		struct {
+#if BMI160_BUS_SPI
 			uint8_t dummy; /* spi related dummy byte */
+#endif
 			uint8_t status;
 			uint8_t int_status[4];
 		};
@@ -277,7 +283,7 @@ int bmi160_trigger_mode_init(const struct device *dev)
 	data->dev = dev;
 
 #if defined(CONFIG_BMI160_TRIGGER_OWN_THREAD)
-	k_sem_init(&data->sem, 0, K_SEM_MAX_LIMIT);
+	k_sem_init(&data->sem, 0, UINT_MAX);
 
 	k_thread_create(&bmi160_thread, bmi160_thread_stack,
 			CONFIG_BMI160_THREAD_STACK_SIZE,
