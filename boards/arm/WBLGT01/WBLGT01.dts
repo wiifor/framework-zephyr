@@ -22,6 +22,7 @@
 		zephyr,code-partition = &slot0_partition;
 	};
 
+	/* Use to control leds with the GPIO driver */
 	leds {
 		compatible = "gpio-leds";
 		led1: led_1 {
@@ -167,13 +168,43 @@
 		};
 	};
 
-	/* These aliases are provided for compatibility with samples */
+	/* Use to control leds with the PWM-LEDS driver */
+	pwmleds {
+		compatible = "pwm-leds";
+		pwm_led0: pwm_led_0 {
+			pwms = <&sw_pwm 19>;
+			label = "Red PWM LED";
+		};
+	};
+
 	aliases {
+		/* These aliases are provided for compatibility with samples */
 		led0 = &led1;
 		led1 = &led2;
 		led2 = &led3;
 		sw0 = &button1;
+		/* These aliases are provided to improve code readability */
+		led-red = &led2;
+		led-green = &led3;
+		led-blue = &led1;
+		red-pwm-led = &pwm_led0;
 	};
+};
+
+/* The RTC is used instead of nordic Timer due to power consumption contrainst.
+ * It means there is only 2 PWM channels instead of 3 (with a timer)
+ * and the prescaler has to be set to 0
+ */
+&sw_pwm {
+	compatible = "nordic,nrf-sw-pwm";
+	status = "okay";
+	label = "SW_PWM";
+	generator = <&rtc0>;
+	channel-count = <2>;
+	clock-prescaler = <0>;
+	ppi-base = <0>;
+	gpiote-base = <0>;
+	#pwm-cells = <1>;
 };
 
 &adc {
@@ -198,7 +229,6 @@
 	status = "okay";
 	tx-pin = <42>;
 	rx-pin = <37>;
-
 };
 
 // Uart to wp77
@@ -210,7 +240,6 @@
 };
 
 //Uart to grove
-
 /* &uart1 {
 	current-speed = <115200>;
 	status = "okay";
