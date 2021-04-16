@@ -46,6 +46,15 @@
 #define ROM_SIZE (CONFIG_FLASH_SIZE*1K - CONFIG_FLASH_LOAD_OFFSET)
 #endif
 
+#ifdef CONFIG_DISK_DRIVER_FLASH
+#define FLASH_FS_SIZE 32K
+#define FLASH_FS_ADDR (ROM_ADDR + ROM_SIZE)
+#define ROM_SIZE (CONFIG_FLASH_SIZE*1K - CONFIG_FLASH_LOAD_OFFSET - \
+	FLASH_FS_SIZE)
+#else
+#define ROM_SIZE (CONFIG_FLASH_SIZE*1K - CONFIG_FLASH_LOAD_OFFSET)
+#endif
+
 #if defined(CONFIG_XIP)
 #if defined(CONFIG_IS_BOOTLOADER)
 #define RAM_SIZE (CONFIG_BOOTLOADER_SRAM_SIZE * 1K)
@@ -86,9 +95,12 @@ _region_min_align = 4;
 MEMORY
     {
     FLASH                 (rx) : ORIGIN = ROM_ADDR, LENGTH = ROM_SIZE
-    SRAM                  (wx) : ORIGIN = RAM_ADDR, LENGTH = RAM_SIZE
+	SRAM                  (wx) : ORIGIN = RAM_ADDR, LENGTH = RAM_SIZE
     /* TI CCFG Registers */
     DT_REGION_FROM_NODE_STATUS_OKAY(FLASH_CCFG, rwx, DT_NODELABEL(ti_ccfg_partition))
+#ifdef CONFIG_DISK_DRIVER_FLASH
+    FLASH_FS 		      (rwx) : ORIGIN = FLASH_FS_ADDR, LENGTH = FLASH_FS_SIZE
+#endif
     /* Data & Instruction Tightly Coupled Memory */
     DT_REGION_FROM_NODE_STATUS_OKAY(ITCM, rw, DT_CHOSEN(zephyr_itcm))
     DT_REGION_FROM_NODE_STATUS_OKAY(DTCM, rw, DT_CHOSEN(zephyr_dtcm))
@@ -108,6 +120,11 @@ MEMORY
     }
 
 ENTRY(CONFIG_KERNEL_ENTRY)
+#ifdef CONFIG_DISK_DRIVER_FLASH
+    TARGET(binary) /* specify the file format of binary file */
+    INPUT (littlefsbin.bin)
+    OUTPUT_FORMAT(default) /* restore the out file format */
+#endif
 
 SECTIONS
     {
@@ -234,6 +251,12 @@ SECTIONS
 
     GROUP_END(ROMABLE_REGION)
 
+#ifdef CONFIG_DISK_DRIVER_FLASH
+    SECTION_PROLOGUE(.flash_fs,,)
+    {
+    littlefsbin.bin
+    } > FLASH_FS
+#endif
     /*
      * These are here according to 'arm-zephyr-elf-ld --verbose',
      * before data section.
