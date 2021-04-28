@@ -92,6 +92,8 @@ source "drivers/sensor/grove/Kconfig"
 
 source "drivers/sensor/ti_hdc/Kconfig"
 
+source "drivers/sensor/ti_hdc20xx/Kconfig"
+
 source "drivers/sensor/hmc5883l/Kconfig"
 
 source "drivers/sensor/hp206c/Kconfig"
@@ -124,6 +126,8 @@ source "drivers/sensor/lis2mdl/Kconfig"
 
 source "drivers/sensor/lis3mdl/Kconfig"
 
+source "drivers/sensor/lm75/Kconfig"
+
 source "drivers/sensor/lps22hb/Kconfig"
 
 source "drivers/sensor/lps22hh/Kconfig"
@@ -144,7 +148,7 @@ source "drivers/sensor/lsm9ds0_mfd/Kconfig"
 
 source "drivers/sensor/max17055/Kconfig"
 
-source "drivers/sensor/max1726x/Kconfig"
+source "drivers/sensor/max17262/Kconfig"
 
 source "drivers/sensor/max30101/Kconfig"
 
@@ -174,9 +178,11 @@ source "drivers/sensor/qdec_nrfx/Kconfig"
 
 source "drivers/sensor/qdec_sam/Kconfig"
 
-source "drivers/sensor/s11/Kconfig"
-
 source "drivers/sensor/sbs_gauge/Kconfig"
+
+source "drivers/sensor/sgp40/Kconfig"
+
+source "drivers/sensor/shtcx/Kconfig"
 
 source "drivers/sensor/sht3xd/Kconfig"
 
