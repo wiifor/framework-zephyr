@@ -1,0 +1,15 @@
+sample:
+  description: MAX1726X sensor sample
+  name: MAX1726X sample
+tests:
+  sample.sensor.max1726x:
+    build_only: true
+    depends_on: arduino_i2c
+    harness: console
+    tags: sensors
+    platform_allow: nrf52840dk_nrf52840
+    harness_config:
+        type: one_line
+        regex:
+            - "V: (.*) V; I: (.*) mA; T: (.*) °C"
+        fixture: fixture_i2c_max1726x

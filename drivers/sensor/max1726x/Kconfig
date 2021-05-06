@@ -1,0 +1,11 @@
+# Copyright 2020 Matija Tudan
+#
+# SPDX-License-Identifier: Apache-2.0
+
+config MAX1726X
+	bool "MAX1726X Fuel Gauge"
+	depends on I2C
+	help
+	  Enable I2C-based driver for MAX1726X Fuel Gauge. This driver supports
+	  reading various sensor settings including voltage, current, temperature,
+	  time to full/empty and remaining capacity in mAh.
