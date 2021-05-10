@@ -7,37 +7,48 @@
 #ifndef ZEPHYR_DRIVERS_SENSOR_BATTERY_MAX1726X_H_
 #define ZEPHYR_DRIVERS_SENSOR_BATTERY_MAX1726X_H_
 
-#define VOLTAGE_MULTIPLIER_UV	1250 / 16
-#define CURRENT_MULTIPLIER_NA	156250
-#define TIME_MULTIPLIER_MS	5625
+#define VOLTAGE_MULTIPLIER_UV 1250 / 16
+#define CURRENT_MULTIPLIER_NA 156250
+#define TIME_MULTIPLIER_MS 5625
+
+/* MAX1726X MASKS */
+#define MAX1726X_HIB_ENTER_TIME_MASK (0x07)
+#define MAX1726X_HIB_THRESHOLD_MASK (0xF)
+#define MAX1726X_HIB_EXIT_TIME_MASK (0X03)
+#define MAX1726X_HIB_SCALAR_MASK (0x07)
+
+/* MAX1726X HIBCFG */
+#define MAX1726X_EN_HIB (BIT(15))
+#define MAX1726X_HIB_ENTER_TIME(n) ((MAX1726X_HIB_ENTER_TIME_MASK & n) << 0x0C)
+#define MAX1726X_HIB_THRESHOLD(n) ((MAX1726X_HIB_THRESHOLD_MASK & n) << 0x08)
+#define MAX1726X_HIB_EXIT_TIME(n) ((MAX1726X_HIB_EXIT_TIME_MASK & n) << 0x03)
+#define MAX1726X_HIB_SCALAR(n) (MAX1726X_HIB_SCALAR_MASK & n)
 
 /* Register addresses */
-enum {
-	STATUS          = 0x00,
-	REP_CAP         = 0x05,
-	REP_SOC         = 0x06,
-	INT_TEMP        = 0x08,
-	VCELL           = 0x09,
-	AVG_CURRENT     = 0x0b,
-	FULL_CAP_REP    = 0x10,
-	TTE             = 0x11,
-	CYCLES          = 0x17,
-	DESIGN_CAP      = 0x18,
-	ICHG_TERM       = 0x1E,
-	TTF             = 0x20,
-	VEMPTY          = 0x3A,
-	FSTAT           = 0x3D,
-	COULOMB_COUNTER = 0x4D,
-	SOFT_WAKEUP     = 0x60,
-	HIBCFG          = 0xBA,
-	MODELCFG        = 0xDB,
+enum { STATUS = 0x00,
+       REP_CAP = 0x05,
+       REP_SOC = 0x06,
+       INT_TEMP = 0x08,
+       VCELL = 0x09,
+       AVG_CURRENT = 0x0b,
+       FULL_CAP_REP = 0x10,
+       TTE = 0x11,
+       CYCLES = 0x17,
+       DESIGN_CAP = 0x18,
+       ICHG_TERM = 0x1E,
+       TTF = 0x20,
+       VEMPTY = 0x3A,
+       FSTAT = 0x3D,
+       COULOMB_COUNTER = 0x4D,
+       SOFT_WAKEUP = 0x60,
+       HIBCFG = 0xBA,
+       MODELCFG = 0xDB,
 };
 
 /* Masks */
-enum {
-	FSTAT_DNR        = 0x01,
-	STATUS_POR       = 0x02,
-	MODELCFG_REFRESH = 0x8000,
+enum { FSTAT_DNR = 0x01,
+       STATUS_POR = 0x02,
+       MODELCFG_REFRESH = 0x8000,
 };
 
 /* MAX1726X specific channels */
@@ -91,6 +102,22 @@ struct max1726x_config {
 	uint16_t recovery_voltage;
 	/* Defined charge voltage value in mV */
 	uint16_t charge_voltage;
+	/* Defined hibernate threshold value in mA as defined the following equation: */
+	/* threshold (mA) = (FullCap(mAh)/0.8hrs)/2^(hibernate_threshold) */
+	uint8_t hibernate_threshold;
+	/* Defined hibernate task period in s as defined the following equation: */
+	/* Task Period (s) = 351msx2^(hibernate_scalar) */
+	uint8_t hibernate_scalar;
+	/* Defined hibernate required time period in s of consecutive current */
+	/* readings above hibernate threshold value before the IC exits */
+	/* hibernate and returns to active mode using the following equation: */
+	/* Exit Time (s) = (hibernate_exit_time+1)x702msx2^(hibernate_scalar) */
+	uint8_t hibernate_exit_time;
+	/* Defined the time period that consecutive current readings must */
+	/* remain below the hibernate threshold value before the IC enters */
+	/* hibernate mode, as defined by the following equation: */
+	/* 2.812sx2^(hibernate_enter_time)<Entry Time<2.812sx2^(hibernate_enter_time+1) */
+	uint8_t hibernate_enter_time;
 };
 
 #endif

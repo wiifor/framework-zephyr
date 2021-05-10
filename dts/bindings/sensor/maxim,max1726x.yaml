@@ -45,3 +45,37 @@ properties:
       type: int
       required: true
       description: Charge voltage in mV
+
+    hibernate-threshold:
+      type: int
+      required: false
+      default: 7
+      description: |
+          Used to set the threshold level for entering or exiting hibernate mode.
+          Value must be betweew 0 and 15
+
+    hibernate-scalar:
+      type: int
+      required: false
+      default: 4
+      description: |
+          Used to set the task period while in hibernate mode. Value must be
+          between 0 and 7
+
+    hibernate-exit-time:
+      type: int
+      required: false
+      default: 3
+      description: |
+          Used to set the required time period of consecutive current readings
+          above the hib-threshold value before the IC exits hibernate and return
+          to active mode of operation. Value must be between 0 and 3
+
+    hibernate-enter-time:
+      type: int
+      required: false
+      default: 0
+      description: |
+          Used to set the time period that consecutive current readings must
+          remain below the hib-threshold value before the IC enters hibernate
+          mode. Value must be between 0 and 7
