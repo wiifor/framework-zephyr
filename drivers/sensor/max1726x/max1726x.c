@@ -73,6 +73,20 @@ static void convert_millis(struct sensor_value *val, int32_t val_millis)
 	val->val2 = (val_millis % 1000) * 1000;
 }
 
+static int max1726x_set_hibernate(const struct device *dev)
+{
+	const struct max1726x_config *const config = dev->config;
+
+	/* Enable hibernate */
+	return max1726x_reg_write(
+		dev, HIBCFG,
+		MAX1726X_EN_HIB |
+			MAX1726X_HIB_ENTER_TIME(config->hibernate_enter_time) |
+			MAX1726X_HIB_THRESHOLD(config->hibernate_threshold) |
+			MAX1726X_HIB_EXIT_TIME(config->hibernate_exit_time) |
+			MAX1726X_HIB_SCALAR(config->hibernate_scalar));
+}
+
 /**
  * @brief Set hibernate mode
  *
