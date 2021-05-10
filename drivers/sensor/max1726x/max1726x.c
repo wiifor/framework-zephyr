@@ -7,7 +7,10 @@
 #include <drivers/i2c.h>
 #include <drivers/sensor.h>
 #include <drivers/sensor/max1726x.h>
+<<<<<<< s2580_hibernate
 
+=======
+>>>>>>> HEAD~1
 #include <logging/log.h>
 LOG_MODULE_REGISTER(max1726x, CONFIG_SENSOR_LOG_LEVEL);
 
