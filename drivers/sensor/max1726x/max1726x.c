@@ -7,10 +7,7 @@
 #include <drivers/i2c.h>
 #include <drivers/sensor.h>
 #include <drivers/sensor/max1726x.h>
-<<<<<<< s2580_hibernate
 
-=======
->>>>>>> HEAD~1
 #include <logging/log.h>
 LOG_MODULE_REGISTER(max1726x, CONFIG_SENSOR_LOG_LEVEL);
 
@@ -76,20 +73,6 @@ static void convert_millis(struct sensor_value *val, int32_t val_millis)
 	val->val2 = (val_millis % 1000) * 1000;
 }
 
-static int max1726x_set_hibernate(const struct device *dev)
-{
-	const struct max1726x_config *const config = dev->config;
-
-	/* Enable hibernate */
-	return max1726x_reg_write(
-		dev, HIBCFG,
-		MAX1726X_EN_HIB |
-			MAX1726X_HIB_ENTER_TIME(config->hibernate_enter_time) |
-			MAX1726X_HIB_THRESHOLD(config->hibernate_threshold) |
-			MAX1726X_HIB_EXIT_TIME(config->hibernate_exit_time) |
-			MAX1726X_HIB_SCALAR(config->hibernate_scalar));
-}
-
 /**
  * @brief Set hibernate mode
  *
@@ -108,6 +91,32 @@ static int max1726x_set_hibernate(const struct device *dev)
 			MAX1726X_HIB_THRESHOLD(config->hibernate_threshold) |
 			MAX1726X_HIB_EXIT_TIME(config->hibernate_exit_time) |
 			MAX1726X_HIB_SCALAR(config->hibernate_scalar));
+}
+
+/**
+ * @brief Set shutdown mode
+ *
+ * @param dev MAX1726X device to access
+ * @return 0 if successful, or -EIO error code
+ */
+static int max1726x_shutdown(const struct device *dev)
+{
+	uint16_t tmp, rc;
+
+	max1726x_reg_read(dev, HIBCFG, &tmp);
+	rc = max1726x_reg_write(dev, HIBCFG, tmp & (~MAX1726X_EN_HIB));
+	if (rc)
+		return -EIO;
+
+	rc = max1726x_reg_write(dev, SHDN_TIMER, 0x001E);
+	if (rc)
+		return -EIO;
+
+	rc = max1726x_reg_write(dev, CONFIG, MAX1726X_EN_SHDN);
+	if (rc)
+		return -EIO;
+
+	return 0;
 }
 
 /**
@@ -217,6 +226,8 @@ static int max1726x_config(const struct device *dev, enum sensor_channel chan,
 	switch ((enum max1726x_sensor_attribute)attr) {
 	case SENSOR_ATTR_MAX1726X_HIBERNATE:
 		return max1726x_set_hibernate(dev);
+	case SENSOR_ATTR_MAX1726X_SHUTDOWN:
+		return max1726x_shutdown(dev);
 	default:
 		LOG_DBG("max1726x attribute not supported");
 		return -ENOTSUP;
