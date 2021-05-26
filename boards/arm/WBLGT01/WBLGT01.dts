@@ -264,6 +264,24 @@
 		reg = <0x76>;
 		label = "BME280";
 	};
+	max17260:max17260@36 {
+		compatible = "maxim,max1726x";
+		reg = <0x36>;
+		label = "MAX1726X";
+		design-voltage = <3600>;
+		desired-voltage = <4200>;
+		desired-charging-current = <89>;
+		design-cap = <2160>;
+		rsense-mohms = <1>;
+		empty-voltage = <3600>;
+		recovery-voltage = <3700>;
+		charge-voltage = <4200>;
+		hibernate-threshold = <12>;
+		hibernate-scalar = <4>;
+		hibernate-exit-time = <3>;
+		hibernate-enter-time = <0>;
+		status = "okay";
+	};
 };
 
 /*
