@@ -9,7 +9,6 @@
 #include <device.h>
 #include <drivers/i2c.h>
 #include <drivers/sensor.h>
-#include <drivers/sensor/opt3001.h>
 #include <logging/log.h>
 #include <sys/__assert.h>
 
@@ -108,10 +107,22 @@ static int opt3001_channel_get(const struct device *dev,
 	return 0;
 }
 
+static const struct sensor_driver_api opt3001_driver_api = {
+	.sample_fetch = opt3001_sample_fetch,
+	.channel_get = opt3001_channel_get,
+};
+
 static int opt3001_chip_init(const struct device *dev)
 {
 	struct opt3001_data *drv_data = dev->data;
 	uint16_t value;
+
+	drv_data->i2c = device_get_binding(DT_INST_BUS_LABEL(0));
+	if (drv_data->i2c == NULL) {
+		LOG_ERR("Failed to get pointer to %s device!",
+			DT_INST_BUS_LABEL(0));
+		return -EINVAL;
+	}
 
 	if (opt3001_reg_read(drv_data, OPT3001_REG_MANUFACTURER_ID,
 		&value) != 0) {
@@ -143,71 +154,8 @@ static int opt3001_chip_init(const struct device *dev)
 	return 0;
 }
 
-/**
- * @brief Set a opt3001 config
- *
- * @param dev OPT3001 device to access
- * @param chan Channel number to read
- * @param attr A sensor device private attribute
- * @param val The value of the channel
- * @return 0 if successful
- * @return -ENOTSUP for unsupported channels
- */
-static int opt3001_config(const struct device *dev, enum sensor_channel chan,
-			   enum sensor_attribute attr,
-			   const struct sensor_value *val)
-{
-	/* Check MAX1726x private attribute types */
-	switch ((enum opt3001_sensor_attribute)attr) {
-	case SENSOR_ATTR_OPT3001_INIT:
-		return opt3001_chip_init(dev);
-	default:
-		LOG_DBG("opt3001 attribute not supported");
-		return -ENOTSUP;
-	}
-
-	return 0;
-}
-
-/**
- * @brief Set a opt3001 attributes
- *
- * @param dev OPT3001 device to access
- * @param chan Channel number to read
- * @param attr A sensor device private attribute
- * @param val The value of the channel
- * @return 0 if opt3001 config is successful
- * @return -ENOTSUP if opt3001 config failed
- */
-static int opt3001_attr_set(const struct device *dev, enum sensor_channel chan,
-			     enum sensor_attribute attr,
-			     const struct sensor_value *val)
-{
-	return opt3001_config(dev, chan, attr, val);
-}
-
-static const struct sensor_driver_api opt3001_driver_api = {
-	.attr_set = opt3001_attr_set,
-	.sample_fetch = opt3001_sample_fetch,
-	.channel_get = opt3001_channel_get,
-};
-
-int opt3001_bind(const struct device *dev)
-{
-	struct opt3001_data *drv_data = dev->data;
-	drv_data->i2c = device_get_binding(DT_INST_BUS_LABEL(0));
-	if (drv_data->i2c == NULL) {
-		LOG_ERR("Failed to get pointer to %s device!",
-			DT_INST_BUS_LABEL(0));
-		return -EINVAL;
-	}
-
-	return 0;
-}
-
 int opt3001_init(const struct device *dev)
 {
-	opt3001_bind(dev);
 	if (opt3001_chip_init(dev) < 0) {
 		return -EINVAL;
 	}
@@ -215,24 +163,8 @@ int opt3001_init(const struct device *dev)
 	return 0;
 }
 
-#define OPT3001_INIT(index)						\
-	static struct opt3001_data opt3001_drv_data_##index;		\
-																\
-DEVICE_DT_INST_DEFINE(index, &opt3001_init, NULL,					\
-		    &opt3001_drv_data_##index, NULL, POST_KERNEL,	\
-		    CONFIG_SENSOR_INIT_PRIORITY, &opt3001_driver_api);
+static struct opt3001_data opt3001_drv_data;
 
-#define OPT3001_BIND(index)						\
-	static struct opt3001_data opt3001_drv_data_##index;		\
-																\
-DEVICE_DT_INST_DEFINE(index, &opt3001_bind, NULL,					\
-		    &opt3001_drv_data_##index, NULL, POST_KERNEL,	\
+DEVICE_DT_INST_DEFINE(0, opt3001_init, device_pm_control_nop,
+		    &opt3001_drv_data, NULL, POST_KERNEL,
 		    CONFIG_SENSOR_INIT_PRIORITY, &opt3001_driver_api);
-
-#if DT_NODE_HAS_STATUS(DT_NODELABEL(opt3001), okay)
-OPT3001_INIT(0)
-#elif DT_NODE_HAS_STATUS(DT_NODELABEL(opt3001), reserved)
-OPT3001_BIND(0)
-#else
-#error "Node is disabled"
-#endif
