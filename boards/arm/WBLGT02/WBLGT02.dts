@@ -1,0 +1,337 @@
+/*
+ * Copyright (c) 2019 Laird Connectivity
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+#include <nordic/nrf52840_qiaa.dtsi>
+
+/ {
+	model = "WBLGT02 board";
+	compatible = "nordic,pca10056-dk";
+
+	chosen {
+		zephyr,console = &uart0;
+		zephyr,shell-uart = &uart0;
+		zephyr,uart-mcumgr = &uart0;
+		zephyr,bt-mon-uart = &uart0;
+		zephyr,bt-c2h-uart = &uart0;
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+		zephyr,code-partition = &slot0_partition;
+	};
+
+	/* Use to control leds with the GPIO driver */
+	leds {
+		compatible = "gpio-leds";
+		led1: led_1 {
+			gpios = <&gpio0 21 0>;
+			label = "Blue LED";
+		};
+		led2: led_2 {
+			gpios = <&gpio0 19 0>;
+			label = "Red LED";
+		};
+		led3: led_3 {
+			gpios = <&gpio0 20 0>;
+			label = "Green LED";
+		};
+	};
+
+	power {
+		compatible = "gpio-keys";
+		power3v3: power_3v3 {
+			gpios = <&gpio1 2 0>;
+			label = "power 3V3";
+		};
+		power1v8: power_1v8 {
+			gpios = <&gpio1 1 0>;
+			label = "power 1V8";
+		};
+		powerVbat: power_Vbat {
+			gpios = <&gpio0 25 0>;
+			label = "power VBAT";
+		};
+	};
+
+	buttons {
+		compatible = "gpio-keys";
+		button1: button_1 {
+			gpios = <&gpio0 22 0>;
+			label = "Push button switch 1 (SW1)";
+		};
+	};
+
+	/* todo : s1613 - Implement drivers support like i2c in the device tree.
+	 * This device tree for now is minimalist and only configures the GPIOs.
+	 * https://docs.zephyrproject.org/latest/guides/dts/howtos.html
+     */
+	battery_alarm {
+		compatible = "gpio-keys";
+		battery_alarm: battery_alarm {
+			gpios = <&gpio0 24 0>;
+			label = "Battery gauge alarm signal";
+		};
+	};
+
+	lvlshifter {
+		compatible = "gpio-keys";
+		lvlshifter: lvlshifter {
+			gpios = <&gpio0 13 0>;
+			label = "Level shifter enable signal";
+		};
+	};
+
+	SENS_GPIO {
+		compatible = "gpio-keys";
+		sens_gpio1: SENS_GPIO_1 {
+			gpios = <&gpio0 31 0>;
+			label = "Connected to WP7702 MCU_RING_IND (need to place R209 on schema).";
+		};
+		sens_gpio2: SENS_GPIO_2 {
+			gpios = <&gpio0 30 0>;
+			label = "Connected to WP7702 MCU_SAFE_PWR_OFF.";
+		};
+		sens_gpio3: SENS_GPIO_3 {
+			gpios = <&gpio0 28 0>;
+			label = "Connected to WP7702 MCU_POWER_ON_N. See wp77xx.cpp to drive MCU power on.";
+		};
+		sens_gpio4: SENS_GPIO_4 {
+			gpios = <&gpio0 29 0>;
+			label = "Connected to WP7702 MCU_RESET_IN_N. See wp77xx.cpp to drive MCU reset.";
+		};
+
+// Used for grove connector uart shall be commented if using uart
+		sens_gpio5: SENS_GPIO_5 {
+			gpios = <&gpio0 3 0>;
+			label = "Connected to SCL/TX pin of MCU Grove connector";
+		};
+		sens_gpio6: SENS_GPIO_6 {
+			gpios = <&gpio1 14 0>;
+			label = "Connected to SDA/RX pin of MCU Grove connector";
+		};
+
+// Used for I2C bridge between WP7702 and nRF, if the I2C bridge is not used the IO should be disconnected.
+		sens_i2c_slave_scl: SENS_I2C_SLAVE_SCL {
+			gpios = <&gpio0 4 0>;
+			label = "Connected to WP7702 I2C1_CLK.";
+		};
+
+		sens_i2c_slave_sda: SENS_I2C_SLAVE_SDA {
+			gpios = <&gpio1 8 0>;
+			label = "Connected to WP7702 I2C1_DATA.";
+		};
+
+		sens_uart_hci_rx: SENS_UART_HCI_RX {
+			gpios = <&gpio0 6 0>;
+			label = "Connected to WP7702 UART1_RX.";
+		};
+
+		sens_uart_hci_tx: SENS_UART_HCI_TX {
+			gpios = <&gpio0 8 0>;
+			label = "Connected to WP7702 UART1_TX.";
+		};
+
+		sens_uart_hci_cts: SENS_UART_HCI_CTS {
+			gpios = <&gpio0 5 0>;
+			label = "Connected to WP7702 UART1_CTS.";
+		};
+
+		sens_uart_hci_rts: SENS_UART_HCI_RTS {
+			gpios = <&gpio0 7 0>;
+			label = "Connected to WP7702 UART1_RTS.";
+		};
+
+		sens_uart_console_rx: SENS_UART_CONSOLE_RX {
+			gpios = <&gpio1 5 0>;
+			label = "Connected to WP7702 UART2_RX.";
+		};
+
+		sens_uart_console_tx: SENS_UART_CONSOLE_TX {
+			gpios = <&gpio1 10 0>;
+			label = "Connected to WP7702 UART2_TX.";
+		};
+	};
+
+	SENS_INT {
+// In standalone config, these IOs should be disconnected. In standard mode, these IOs should be configured as OUTPUT and initialize at LLOW.
+		compatible = "gpio-keys";
+		sens_int1: SENS_INT_1 {
+			gpios = <&gpio1 15 0>;
+			label = "Connected to WP7702 GPIO36.";
+		};
+
+		sens_int2: SENS_INT_2 {
+			gpios = <&gpio1 12 0>;
+			label = "Connected to WP7702 GPIO38.";
+		};
+	};
+
+	/* Use to control leds with the PWM-LEDS driver */
+	pwmleds {
+		compatible = "pwm-leds";
+		pwm_led0: pwm_led_0 {
+			pwms = <&sw_pwm 19>;
+			label = "Red PWM LED";
+		};
+	};
+
+	aliases {
+		/* These aliases are provided for compatibility with samples */
+		led0 = &led1;
+		led1 = &led2;
+		led2 = &led3;
+		sw0 = &button1;
+		/* These aliases are provided to improve code readability */
+		led-red = &led2;
+		led-green = &led3;
+		led-blue = &led1;
+		red-pwm-led = &pwm_led0;
+	};
+};
+
+/* The RTC is used instead of nordic Timer due to power consumption contrainst.
+ * It means there is only 2 PWM channels instead of 3 (with a timer)
+ * and the prescaler has to be set to 0
+ */
+&sw_pwm {
+	compatible = "nordic,nrf-sw-pwm";
+	status = "okay";
+	label = "SW_PWM";
+	generator = <&rtc0>;
+	channel-count = <2>;
+	clock-prescaler = <0>;
+	ppi-base = <0>;
+	gpiote-base = <0>;
+	#pwm-cells = <1>;
+};
+
+&adc {
+	status = "okay";
+};
+
+&gpiote {
+	status = "okay";
+};
+
+&gpio0 {
+	status = "okay";
+};
+
+&gpio1 {
+	status = "okay";
+};
+
+&uart0 {
+	compatible = "nordic,nrf-uart";
+	current-speed = <115200>;
+	status = "okay";
+	tx-pin = <42>;
+	rx-pin = <37>;
+};
+
+// Uart to wp77
+&uart1 {
+	current-speed = <115200>;
+	status = "okay";
+	tx-pin = <8>;
+	rx-pin = <6>;
+};
+
+//Uart to grove
+/* &uart1 {
+	current-speed = <115200>;
+	status = "okay";
+	tx-pin = <3>;
+	rx-pin = <46>;
+}; */
+
+
+&i2c0 {
+	compatible = "nordic,nrf-twi";
+	status = "okay";
+	sda-pin = <26>;
+	scl-pin = <27>;
+	bmi160:bmi160@68 {
+		compatible = "bosch,bmi160";
+		reg = <0x68>;
+		int-gpios = <&gpio0 11 0>;
+		label = "BMI160";
+	};
+	bme280:bme280@76 {
+		compatible = "bosch,bme280";
+		reg = <0x76>;
+		label = "BME280";
+	};
+	max17260:max17260@36 {
+		compatible = "maxim,max1726x";
+		reg = <0x36>;
+		label = "MAX1726X";
+		design-voltage = <3600>;
+		desired-voltage = <4200>;
+		desired-charging-current = <89>;
+		design-cap = <2160>;
+		rsense-mohms = <1>;
+		empty-voltage = <3600>;
+		recovery-voltage = <3700>;
+		charge-voltage = <4200>;
+		hibernate-threshold = <12>;
+		hibernate-scalar = <4>;
+		hibernate-exit-time = <3>;
+		hibernate-enter-time = <0>;
+		status = "okay";
+	};
+};
+
+/*
+&i2c1 {
+	compatible = "nordic,nrf-twi";
+	status = "okay";
+	sda-pin = <40>;
+	scl-pin = <4>;
+};
+*/
+
+&flash0 {
+	/*
+	 * For more information, see:
+	 * http://docs.zephyrproject.org/latest/guides/dts/index.html#flash-partitions
+	 */
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		boot_partition: partition@0 {
+			label = "mcuboot";
+			reg = <0x000000000 0x0000C000>;
+		};
+		slot0_partition: partition@c000 {
+			label = "image-0";
+			reg = <0x0000C000 0x000067000>;
+		};
+		slot1_partition: partition@73000 {
+			label = "image-1";
+			reg = <0x00073000 0x000067000>;
+		};
+		scratch_partition: partition@da000 {
+			label = "image-scratch";
+			reg = <0x000da000 0x0001e000>;
+		};
+
+		/*
+		 * The flash starting at 0x000f8000 and ending at
+		 * 0x000fffff is reserved for use by the application.
+		 */
+		storage_partition: partition@f8000 {
+			label = "storage";
+			reg = <0x000f8000 0x00008000>;
+		};
+	};
+};
+
+&usbd {
+	compatible = "nordic,nrf-usbd";
+	status = "okay";
+};
