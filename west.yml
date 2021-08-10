@@ -132,9 +132,9 @@ manifest:
     - name: nrf_hw_models
       path: modules/bsim_hw_models/nrf_hw_models
       revision: a47e326ca772ddd14cc3b9d4ca30a9ab44ecca16
-    - name: TraceRecorderSource
-      path: modules/debug/TraceRecorder
-      revision: 5b5f8d7adbf0e93a09087e8f5708f0eebb8b25bf
+    # - name: TraceRecorderSource
+    #   path: modules/debug/TraceRecorder
+    #   revision: 5b5f8d7adbf0e93a09087e8f5708f0eebb8b25bf
     - name: hal_xtensa
       revision: 2f04b615cd5ad3a1b8abef33f9bdd10cc1990ed6
       path: modules/hal/xtensa
@@ -148,13 +148,13 @@ manifest:
       repo-path: mcuboot
       path: modules/tee/tfm-mcuboot
       revision: v1.7.2
-    - name: nanopb
-      path: modules/lib/nanopb
-      revision: d148bd26718e4c10414f07a7eb1bd24c62e56c5d
-    - name: tensorflow
-      repo-path: tensorflow
-      path: modules/lib/tensorflow
-      revision: dc70a45a7cc12c25726a32cd91b28be59e7bc596
+    # - name: nanopb
+    #   path: modules/lib/nanopb
+    #   revision: d148bd26718e4c10414f07a7eb1bd24c62e56c5d
+    # - name: tensorflow
+    #   repo-path: tensorflow
+    #   path: modules/lib/tensorflow
+    #   revision: dc70a45a7cc12c25726a32cd91b28be59e7bc596
 
   self:
     path: zephyr
