@@ -26,8 +26,8 @@ extern "C" {
  */
 enum bmi610_sensor_attribute {
 	SENSOR_ATTR_BMI160_PRIV_START = SENSOR_ATTR_PRIV_START,
-#if defined(CONFIG_BMI160_ACCEL_PMU_RUNTIME) ||\
-		defined(CONFIG_BMI160_GYRO_PMU_RUNTIME)
+// #if defined(CONFIG_BMI160_ACCEL_PMU_RUNTIME) ||\
+// 		defined(CONFIG_BMI160_GYRO_PMU_RUNTIME)
 	/**
 	 * Manage power mode. This will be used by the internal chip's algorithms
 	 * to enable, disable or put in low power certain axis, or all of them.
@@ -35,7 +35,7 @@ enum bmi610_sensor_attribute {
 	SENSOR_ATTR_BMI160_PMU_ACTIVE,
 	SENSOR_ATTR_BMI160_PMU_LOW_POWER,
 	SENSOR_ATTR_BMI160_PMU_OFF,
-#endif
+// #endif
 	SENSOR_ATTR_BMI160_PRIV_END,
 };
 

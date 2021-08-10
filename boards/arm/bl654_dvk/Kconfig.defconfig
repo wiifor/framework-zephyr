@@ -22,3 +22,7 @@ config BT_CTLR
 	default BT
 
 endif # BOARD_BL654_DVK
+
+config LOG_BUFFER_SIZE
+    int "Number of bytes dedicated for the logger internal buffer"
+	default 1024
