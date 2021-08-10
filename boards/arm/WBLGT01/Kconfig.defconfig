@@ -19,9 +19,11 @@ config BMI160
 if SPI
 
 config SPI_0
+	bool "SPI 0 hardware bus support"
 	default y
 
 config SPI_1
+	bool "SPI 1 hardware bus support"
 	default y
 
 endif # SPI
