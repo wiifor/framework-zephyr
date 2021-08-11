@@ -1,0 +1,67 @@
+# Copyright (c) 2020 Linaro Limited.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Documentation GitHub Workflow
+
+on:
+  pull_request:
+    paths:
+    - 'doc/**'
+    - '**.rst'
+    - 'include/**'
+    - 'kernel/include/kernel_arch_interface.h'
+    - 'lib/libc/**'
+    - 'subsys/testsuite/ztest/include/**'
+    - 'tests/**'
+    - '**/Kconfig*'
+    - 'west.yml'
+    - '.github/workflows/doc-build.yml'
+    - 'scripts/dts/**'
+    - 'scripts/requirements-doc.txt'
+
+jobs:
+  doc-build:
+    name: "Documentation Build"
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Update PATH for west
+      run: |
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: checkout
+      uses: actions/checkout@v2
+
+    - name: install-pkgs
+      run: |
+        sudo apt-get install -y ninja-build doxygen
+
+    - name: cache-pip
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-doc-pip
+
+    - name: install-pip
+      run: |
+        sudo pip3 install -U setuptools wheel pip
+        pip3 install -r scripts/requirements-base.txt
+        pip3 install -r scripts/requirements-doc.txt
+        pip3 install west==0.11.0
+
+    - name: west setup
+      run: |
+        west init -l . || true
+
+    - name: build-docs
+      run: |
+        source zephyr-env.sh
+        SPHINXOPTS="-q -j auto" make -C doc htmldocs
+        tar cvf htmldocs.tar --directory=./doc/_build html
+
+    - name: upload-build
+      uses: actions/upload-artifact@master
+      continue-on-error: True
+      with:
+        name: htmldocs.tar
+        path: htmldocs.tar
