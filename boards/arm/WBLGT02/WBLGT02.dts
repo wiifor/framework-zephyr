@@ -124,13 +124,13 @@
 		};
 
 		sens_uart_hci_rx: SENS_UART_HCI_RX {
-			gpios = <&gpio0 6 0>;
-			label = "Connected to WP7702 UART1_RX.";
+			gpios = <&gpio0 8 0>;
+			label = "Connected to WP7702 MCU_UART_HCI_RX / UART1_RX (output from WP7702 standpoint).";
 		};
 
 		sens_uart_hci_tx: SENS_UART_HCI_TX {
-			gpios = <&gpio0 8 0>;
-			label = "Connected to WP7702 UART1_TX.";
+			gpios = <&gpio0 6 0>;
+			label = "Connected to WP7702 MCU_UART_HCI_TX / UART1_TX (input from WP7702 standpoint).";
 		};
 
 		sens_uart_hci_cts: SENS_UART_HCI_CTS {
@@ -235,8 +235,8 @@
 &uart1 {
 	current-speed = <115200>;
 	status = "okay";
-	tx-pin = <8>;
-	rx-pin = <6>;
+	tx-pin = <6>;
+	rx-pin = <8>;
 };
 
 //Uart to grove
