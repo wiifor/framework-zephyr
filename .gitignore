@@ -12,7 +12,7 @@ build*/
 !tests/drivers/build_all
 cscope.*
 .dir
-
+_pio
 /*.patch
 
 # The .cache directory will be used to cache toolchain capabilities if
