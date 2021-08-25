@@ -22,7 +22,7 @@ zephyr_library_sources_ifdef(CONFIG_HAS_SEMTECH_SX1276
   ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/sx1276/sx1276.c
 )
 zephyr_library_sources_ifdef(CONFIG_HAS_SEMTECH_SX126X
-  ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/sx126x/sx126x.c
+  ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/sx126x/sx126x_lmn.c
   ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/sx126x/radio.c
 )
 
@@ -32,6 +32,19 @@ if(${CONFIG_HAS_SEMTECH_LORAMAC})
     ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/mac/region
   )
 endif()
+
+#zephyr_library_sources_ifdef(CONFIG_HAS_SEMTECH_LR1110
+zephyr_library_sources(
+  ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/lr1110/lr1110_driver/src/lr1110_bootloader.c
+  ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/lr1110/lr1110_driver/src/lr1110_driver_version.c
+  ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/lr1110/lr1110_driver/src/lr1110_gnss.c
+  ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/lr1110/lr1110_driver/src/lr1110_crypto_engine.c
+  ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/lr1110/lr1110_driver/src/lr1110_radio.c
+  ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/lr1110/lr1110_driver/src/lr1110_regmem.c
+  ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/lr1110/lr1110_driver/src/lr1110_system.c
+  ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/lr1110/lr1110_driver/src/lr1110_wifi.c
+  ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/lr1110/radio.c
+)
 
 zephyr_library_compile_definitions_ifdef(CONFIG_HAS_SEMTECH_SOFT_SE SOFT_SE)
 
