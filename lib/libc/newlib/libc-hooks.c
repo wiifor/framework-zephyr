@@ -300,15 +300,15 @@ __weak FUNC_ALIAS(_sbrk, sbrk, void *);
 
 static LIBC_DATA SYS_MUTEX_DEFINE(heap_mutex);
 
-void __malloc_lock(struct _reent *reent)
-{
-	sys_mutex_lock(&heap_mutex, K_FOREVER);
-}
+// void __malloc_lock(struct _reent *reent)
+// {
+// 	sys_mutex_lock(&heap_mutex, K_FOREVER);
+// }
 
-void __malloc_unlock(struct _reent *reent)
-{
-	sys_mutex_unlock(&heap_mutex);
-}
+// void __malloc_unlock(struct _reent *reent)
+// {
+// 	sys_mutex_unlock(&heap_mutex);
+// }
 
 __weak int *__errno(void)
 {
