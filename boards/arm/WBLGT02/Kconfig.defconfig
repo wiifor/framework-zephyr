@@ -16,16 +16,6 @@ config BMI160
 	default y
 	depends on I2C
 
-if SPI
-
-config SPI_0
-	default y
-
-config SPI_1
-	default y
-
-endif # SPI
-
 if USB
 
 config USB_NRFX
