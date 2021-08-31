@@ -33,8 +33,14 @@ if(${CONFIG_HAS_SEMTECH_LORAMAC})
   )
 endif()
 
-#zephyr_library_sources_ifdef(CONFIG_HAS_SEMTECH_LR1110
-zephyr_library_sources(
+if(${CONFIG_HAS_SEMTECH_LR1110})
+  zephyr_library_include_directories(
+    ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/lr1110/lr1110_driver/src
+    ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/lr1110
+  )
+endif()
+
+zephyr_library_sources_ifdef(CONFIG_HAS_SEMTECH_LR1110
   ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/lr1110/lr1110_driver/src/lr1110_bootloader.c
   ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/lr1110/lr1110_driver/src/lr1110_driver_version.c
   ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/lr1110/lr1110_driver/src/lr1110_gnss.c
