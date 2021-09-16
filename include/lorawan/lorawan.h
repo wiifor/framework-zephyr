@@ -278,6 +278,23 @@ enum lorawan_datarate lorawan_get_min_datarate(void);
 void lorawan_get_payload_sizes(uint8_t *max_next_payload_size,
 			       uint8_t *max_payload_size);
 
+/**
+ * @brief Set the initial devNonce value
+ *
+ * Set the value of the DevNonce, should be used after the lorawan init
+ * and before the lorawan join request
+ *
+ * @param devnonce the devNonce value
+ */
+void lorawan_set_devnonce(uint16_t devnonce);
+
+/**
+ * @brief Get the current devNonce
+ *
+ * @return the current devNonce value
+ */
+uint16_t lorawan_get_devnonce();
+
 #ifdef __cplusplus
 }
 #endif

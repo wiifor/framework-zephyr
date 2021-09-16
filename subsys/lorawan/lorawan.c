@@ -75,6 +75,22 @@ static LoRaMacEventInfoStatus_t last_mlme_indication_status;
 static uint8_t (*getBatteryLevelUser)(void);
 static void (*dr_change_cb)(enum lorawan_datarate dr);
 
+void lorawan_set_devnonce(uint16_t devnonce){
+    MibRequestConfirm_t mibReq;
+    mibReq.Type = MIB_NVM_CTXS;
+    LoRaMacMibGetRequestConfirm( &mibReq );
+    LoRaMacNvmData_t* nvm = mibReq.Param.Contexts;
+	nvm->Crypto.DevNonce = devnonce;
+}
+
+uint16_t lorawan_get_devnonce(){
+    MibRequestConfirm_t mibReq;
+    mibReq.Type = MIB_NVM_CTXS;
+    LoRaMacMibGetRequestConfirm( &mibReq );
+    LoRaMacNvmData_t* nvm = mibReq.Param.Contexts;
+	return nvm->Crypto.DevNonce;
+}
+
 void BoardGetUniqueId(uint8_t *id)
 {
 	/* Do not change the default value */

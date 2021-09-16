@@ -407,7 +407,6 @@ static int lr1110_lora_init(const struct device *dev)
 		return -EINVAL;
 	}
 
-	#if HAVE_GPIO_CS
 	((lr1110_t *)context)->spi_cs.gpio_dev = device_get_binding(GPIO_CS_LABEL);
 	if (!((lr1110_t *)context)->spi_cs.gpio_dev) {
 		LOG_ERR("Cannot get pointer to %s device", GPIO_CS_LABEL);
@@ -418,7 +417,6 @@ static int lr1110_lora_init(const struct device *dev)
 	((lr1110_t *)context)->spi_cs.delay = 0U;
 
 	((lr1110_t *)context)->spi_cfg.cs = &((lr1110_t *)context)->spi_cs;
-	#endif
 
 	((lr1110_t *)context)->spi_cfg.operation = SPI_WORD_SET(8) | SPI_TRANSFER_MSB;
 	((lr1110_t *)context)->spi_cfg.frequency = DT_INST_PROP(0, spi_max_frequency);
