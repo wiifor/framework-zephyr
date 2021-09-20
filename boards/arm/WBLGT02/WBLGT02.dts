@@ -61,6 +61,14 @@
 			gpios = <&gpio0 22 0>;
 			label = "Push button switch 1 (SW1)";
 		};
+		reedSwitch: reed_switch {
+		    gpios = <&gpio1 4 0>;
+			label = "Reed switch";
+		};
+		lightSensor: light_sensor {
+			gpios = <&gpio0 15 0>;
+			label = "Light sensor";
+		};
 	};
 
 	/* todo : s1613 - Implement drivers support like i2c in the device tree.
@@ -86,7 +94,7 @@
 	SENS_GPIO {
 		compatible = "gpio-keys";
 		sens_gpio1: SENS_GPIO_1 {
-			gpios = <&gpio0 31 0>;
+			gpios = <&gpio0 16 0>;
 			label = "Connected to WP7702 MCU_RING_IND (need to place R209 on schema).";
 		};
 		sens_gpio2: SENS_GPIO_2 {
@@ -100,16 +108,6 @@
 		sens_gpio4: SENS_GPIO_4 {
 			gpios = <&gpio0 29 0>;
 			label = "Connected to WP7702 MCU_RESET_IN_N. See wp77xx.cpp to drive MCU reset.";
-		};
-
-// Used for grove connector uart shall be commented if using uart
-		sens_gpio5: SENS_GPIO_5 {
-			gpios = <&gpio0 3 0>;
-			label = "Connected to SCL/TX pin of MCU Grove connector";
-		};
-		sens_gpio6: SENS_GPIO_6 {
-			gpios = <&gpio1 14 0>;
-			label = "Connected to SDA/RX pin of MCU Grove connector";
 		};
 
 // Used for I2C bridge between WP7702 and nRF, if the I2C bridge is not used the IO should be disconnected.
@@ -183,6 +181,8 @@
 		led1 = &led2;
 		led2 = &led3;
 		sw0 = &button1;
+		sw1 = &reedSwitch;
+		sw2 = &lightSensor;
 		/* These aliases are provided to improve code readability */
 		led-red = &led2;
 		led-green = &led3;
