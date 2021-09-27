@@ -129,6 +129,9 @@
 		reset-gpios = <&gpio0 23 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
 		busy-gpios = <&gpio0 24 GPIO_ACTIVE_HIGH>;
 		dio9-gpios = <&gpio1 4 GPIO_ACTIVE_HIGH>;
+		rf-switch-enable = <(LR1110_SYSTEM_RFSW0_HIGH | LR1110_SYSTEM_RFSW1_HIGH)>;
+		rf-switch-tx = <(LR1110_SYSTEM_RFSW0_HIGH | LR1110_SYSTEM_RFSW1_HIGH)>;
+		rf-switch-rx = <LR1110_SYSTEM_RFSW0_HIGH>;
 		tcxo-voltage = <LR1110_TCXO_3V3>;
 		tcxo-power-startup-delay-ms = <5>;
 		spi-max-frequency = <1000000>;

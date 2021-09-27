@@ -30,6 +30,10 @@ LOG_MODULE_REGISTER(lr1110, LOG_LEVEL_DBG);
 #define GPIO_TX_ENABLE_PIN DT_INST_GPIO_PIN(0, tx_enable_gpios)
 #define GPIO_RX_ENABLE_PIN DT_INST_GPIO_PIN(0, rx_enable_gpios)
 
+#define RF_SWITCH_ENABLE DT_INST_PROP(0, rf_switch_enable)
+#define RF_SWITCH_TX DT_INST_PROP(0, rf_switch_tx)
+#define RF_SWITCH_RX DT_INST_PROP(0, rf_switch_rx)
+
 #define HAVE_TCXO DT_INST_NODE_HAS_PROP(0, tcxo_voltage)
 #if HAVE_TCXO
 #define TCXO_VOLTAGE DT_INST_PROP(0, tcxo_voltage)
@@ -124,10 +128,10 @@ void lr1110_board_init(const void *context, lr1110_dio_irq_handler dio_irq)
 
 	// Initialize RF switch control
 	lr1110_system_rfswitch_config_t rf_switch_configuration;
-	rf_switch_configuration.enable = LR1110_SYSTEM_RFSW0_HIGH | LR1110_SYSTEM_RFSW1_HIGH;
+	rf_switch_configuration.enable = RF_SWITCH_ENABLE;
 	rf_switch_configuration.standby = 0;
-	rf_switch_configuration.rx = LR1110_SYSTEM_RFSW0_HIGH;
-	rf_switch_configuration.tx = LR1110_SYSTEM_RFSW0_HIGH | LR1110_SYSTEM_RFSW1_HIGH;
+	rf_switch_configuration.rx = RF_SWITCH_RX;
+	rf_switch_configuration.tx = RF_SWITCH_TX;
 	rf_switch_configuration.wifi = 0;
 	rf_switch_configuration.gnss = 0;
 

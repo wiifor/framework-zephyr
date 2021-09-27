@@ -44,6 +44,36 @@ properties:
         GPIO connected to DIO9. This GPIO will be used as a generic
         IRQ line from the chip.
 
+    rf-switch-enable:
+      type: int
+      required: true
+      description: |
+        Enable rf switch. This value is is a 5-bits bitmap (e.g. 01001 is a
+        valid value) where each bit is a state of a GPIO (1 for high, 0 for
+        low).
+
+        See constants in dt-bindings/lora/lr1110.h.
+
+    rf-switch-tx:
+      type: int
+      required: true
+      description: |
+        Rf switch tx configuration. This value is is a 5-bits bitmap (e.g. 01001
+        is a valid value) where each bit is a state of a GPIO (1 for high, 0 for
+        low).
+
+        See constants in dt-bindings/lora/lr1110.h.
+
+    rf-switch-rx:
+      type: int
+      required: true
+      description: |
+        Rf switch rx configuration. This value is is a 5-bits bitmap (e.g. 01001
+        is a valid value) where each bit is a state of a GPIO (1 for high, 0 for
+        low).
+
+        See constants in dt-bindings/lora/lr1110.h.
+
     tcxo-voltage:
       type: int
       required: false
