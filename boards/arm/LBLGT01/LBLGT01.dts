@@ -1,0 +1,292 @@
+/*
+ * Copyright (c) 2019 Laird Connectivity
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+#include <nordic/nrf52840_qiaa.dtsi>
+#include "dt-bindings/lora/lr1110.h"
+
+/ {
+	model = "LBLGT01 board";
+	compatible = "nordic,pca10056-dk";
+
+	chosen {
+		zephyr,console = &uart0;
+		zephyr,shell-uart = &uart0;
+		zephyr,uart-mcumgr = &uart0;
+		zephyr,bt-mon-uart = &uart0;
+		zephyr,bt-c2h-uart = &uart0;
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+		zephyr,code-partition = &slot0_partition;
+	};
+
+	/* Use to control leds with the GPIO driver */
+	leds {
+		compatible = "gpio-leds";
+		led1: led_1 {
+			gpios = <&gpio0 21 0>;
+			label = "Blue LED";
+		};
+		led2: led_2 {
+			gpios = <&gpio0 19 0>;
+			label = "Red LED";
+		};
+		led3: led_3 {
+			gpios = <&gpio0 20 0>;
+			label = "Green LED";
+		};
+	};
+
+	power {
+		compatible = "gpio-keys";
+		power3v3: power_3v3 {
+			gpios = <&gpio1 2 0>;
+			label = "power 3V3";
+		};
+		powerVbat: power_Vbat {
+			gpios = <&gpio0 25 0>;
+			label = "power VBAT";
+		};
+	};
+
+	buttons {
+		compatible = "gpio-keys";
+		button1: button_1 {
+			gpios = <&gpio0 22 0>;
+			label = "Push button switch 1 (SW1)";
+		};
+		reedSwitch: reed_switch {
+		    gpios = <&gpio1 4 0>;
+			label = "Reed switch";
+		};
+		lightSensor: light_sensor {
+			gpios = <&gpio0 15 0>;
+			label = "Light sensor";
+		};
+	};
+
+	/* todo : s1613 - Implement drivers support like i2c in the device tree.
+	 * This device tree for now is minimalist and only configures the GPIOs.
+	 * https://docs.zephyrproject.org/latest/guides/dts/howtos.html
+     */
+	battery_alarm {
+		compatible = "gpio-keys";
+		battery_alarm: battery_alarm {
+			gpios = <&gpio0 24 0>;
+			label = "Battery gauge alarm signal";
+		};
+	};
+
+	lvlshifter {
+		compatible = "gpio-keys";
+		lvlshifter: lvlshifter {
+			gpios = <&gpio0 13 0>;
+			label = "Level shifter enable signal";
+		};
+	};
+
+	SENS_GPIO {
+		compatible = "gpio-keys";
+		sens_uart_console_rx: SENS_UART_CONSOLE_RX {
+			gpios = <&gpio1 5 0>;
+			label = "Connected to WP7702 UART2_RX.";
+		};
+
+		sens_uart_console_tx: SENS_UART_CONSOLE_TX {
+			gpios = <&gpio1 10 0>;
+			label = "Connected to WP7702 UART2_TX.";
+		};
+	};
+
+	/* Use to control leds with the PWM-LEDS driver */
+	pwmleds {
+		compatible = "pwm-leds";
+		pwm_led0: pwm_led_0 {
+			pwms = <&sw_pwm 19>;
+			label = "Red PWM LED";
+		};
+	};
+
+	aliases {
+		/* These aliases are provided for compatibility with samples */
+		led0 = &led1;
+		led1 = &led2;
+		led2 = &led3;
+		sw0 = &button1;
+		sw1 = &reedSwitch;
+		sw2 = &lightSensor;
+		/* These aliases are provided to improve code readability */
+		led-red = &led2;
+		led-green = &led3;
+		led-blue = &led1;
+		red-pwm-led = &pwm_led0;
+		lora0 = &lora;
+	};
+};
+
+/* The RTC is used instead of nordic Timer due to power consumption contrainst.
+ * It means there is only 2 PWM channels instead of 3 (with a timer)
+ * and the prescaler has to be set to 0
+ */
+&sw_pwm {
+	compatible = "nordic,nrf-sw-pwm";
+	status = "okay";
+	label = "SW_PWM";
+	generator = <&rtc0>;
+	channel-count = <2>;
+	clock-prescaler = <0>;
+	ppi-base = <0>;
+	gpiote-base = <0>;
+	#pwm-cells = <1>;
+};
+
+&adc {
+	status = "okay";
+};
+
+&gpiote {
+	status = "okay";
+};
+
+&gpio0 {
+	status = "okay";
+};
+
+&gpio1 {
+	status = "okay";
+};
+
+&uart0 {
+	compatible = "nordic,nrf-uart";
+	current-speed = <115200>;
+	status = "okay";
+	tx-pin = <42>;
+	rx-pin = <37>;
+};
+
+
+//Uart to grove
+/* &uart1 {
+	current-speed = <115200>;
+	status = "okay";
+	tx-pin = <3>;
+	rx-pin = <46>;
+}; */
+
+
+&i2c0 {
+	compatible = "nordic,nrf-twi";
+	status = "okay";
+	sda-pin = <26>;
+	scl-pin = <27>;
+	bmi160:bmi160@68 {
+		compatible = "bosch,bmi160";
+		reg = <0x68>;
+		int-gpios = <&gpio0 11 0>;
+		label = "BMI160";
+	};
+	bme280:bme280@76 {
+		compatible = "bosch,bme280";
+		reg = <0x76>;
+		label = "BME280";
+	};
+	max17260:max17260@36 {
+		compatible = "maxim,max1726x";
+		reg = <0x36>;
+		label = "MAX1726X";
+		design-voltage = <3600>;
+		desired-voltage = <4200>;
+		desired-charging-current = <89>;
+		design-cap = <2160>;
+		rsense-mohms = <1>;
+		empty-voltage = <3600>;
+		recovery-voltage = <3700>;
+		charge-voltage = <4200>;
+		hibernate-threshold = <12>;
+		hibernate-scalar = <4>;
+		hibernate-exit-time = <3>;
+		hibernate-enter-time = <0>;
+		status = "okay";
+	};
+	opt3001:opt3001@44 {
+		compatible = "ti,opt3001";
+		label = "OPT3001";
+		reg = <0x44>;
+	};
+};
+
+/*
+&i2c1 {
+	compatible = "nordic,nrf-twi";
+	status = "okay";
+	sda-pin = <40>;
+	scl-pin = <4>;
+};
+*/
+
+&spi1 {
+	compatible = "nordic,nrf-spi";
+	status = "okay";
+	sck-pin = <8>;
+	mosi-pin = <40>;
+	miso-pin = <4>;
+	cs-gpios = <&gpio0 6 GPIO_ACTIVE_LOW>;
+	lora: lr1110@0 {
+		compatible = "semtech,lr1110";
+		reg = <0>;
+		label = "lr1110";
+		reset-gpios = <&gpio0 29 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		busy-gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
+		dio9-gpios = <&gpio1 15 GPIO_ACTIVE_HIGH>;
+		rf-switch-enable = <(LR1110_SYSTEM_RFSW0_HIGH | LR1110_SYSTEM_RFSW1_HIGH)>;
+		rf-switch-tx = <LR1110_SYSTEM_RFSW1_HIGH>;
+		rf-switch-rx = <LR1110_SYSTEM_RFSW0_HIGH>;
+		spi-max-frequency = <1000000>;
+	};
+};
+
+&flash0 {
+	/*
+	 * For more information, see:
+	 * http://docs.zephyrproject.org/latest/guides/dts/index.html#flash-partitions
+	 */
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		boot_partition: partition@0 {
+			label = "mcuboot";
+			reg = <0x000000000 0x0000C000>;
+		};
+		slot0_partition: partition@c000 {
+			label = "image-0";
+			reg = <0x0000C000 0x000067000>;
+		};
+		slot1_partition: partition@73000 {
+			label = "image-1";
+			reg = <0x00073000 0x000067000>;
+		};
+		scratch_partition: partition@da000 {
+			label = "image-scratch";
+			reg = <0x000da000 0x0001e000>;
+		};
+
+		/*
+		 * The flash starting at 0x000f8000 and ending at
+		 * 0x000fffff is reserved for use by the application.
+		 */
+		storage_partition: partition@f8000 {
+			label = "storage";
+			reg = <0x000f8000 0x00008000>;
+		};
+	};
+};
+
+&usbd {
+	compatible = "nordic,nrf-usbd";
+	status = "okay";
+};
