@@ -21,8 +21,6 @@ manifest:
   remotes:
     - name: upstream
       url-base: https://github.com/zephyrproject-rtos
-    - name: wiifor
-      url-base: https://github.com/wiifor
 
   #
   # Please add items below based on alphabetical order
@@ -108,8 +106,7 @@ manifest:
       revision: 6010f0523cbc75f551d9256cf782f173177acdef
       path: modules/lib/open-amp
     - name: loramac-node
-      remote: wiifor
-      revision: 54a96a6b6b84ba7dc7b155f005bc0d3e522be6c0
+      revision: 12019623bbad9eb54fe51066847a7cbd4b4eac57
       path: modules/lib/loramac-node
     - name: openthread
       revision: f460532d4afa5d49feba241e5dc31c56123d31a8
