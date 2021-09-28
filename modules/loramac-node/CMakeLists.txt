@@ -22,7 +22,7 @@ zephyr_library_sources_ifdef(CONFIG_HAS_SEMTECH_SX1276
   ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/sx1276/sx1276.c
 )
 zephyr_library_sources_ifdef(CONFIG_HAS_SEMTECH_SX126X
-  ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/sx126x/sx126x_lmn.c
+  ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/sx126x/sx126x.c
   ${ZEPHYR_LORAMAC_NODE_MODULE_DIR}/src/radio/sx126x/radio.c
 )
 
