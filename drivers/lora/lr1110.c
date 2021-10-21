@@ -16,6 +16,9 @@
 #include "lr1110_general.h"
 
 #include <logging/log.h>
+
+#include <drivers/lora/lr1110.h>
+
 LOG_MODULE_REGISTER(lr1110, LOG_LEVEL_DBG);
 
 #define DT_DRV_COMPAT semtech_lr1110
@@ -240,6 +243,7 @@ lr1110_hal_status_t lr1110_hal_read(const void *context, const uint8_t *command,
 
 		return lr1110_hal_wait_on_busy(context);
 	}
+	LOG_ERR("Error during wake up");
 	return LR1110_HAL_STATUS_ERROR;
 }
 
@@ -277,6 +281,7 @@ lr1110_hal_status_t lr1110_hal_write_read(const void *context, const uint8_t *co
 			return LR1110_HAL_STATUS_OK;
 		}
 	}
+	LOG_ERR("Error during wake up");
 	return LR1110_HAL_STATUS_ERROR;
 }
 
@@ -379,13 +384,25 @@ static void lr1110_dio9_irq_callback(const struct device *dev, struct gpio_callb
 	}
 }
 
+void lr1110_read_uid(const struct device *dev, lr1110_uid_t uid)
+{
+
+	lr1110_system_read_uid(context, uid);
+
+}
+
+void lr1110_read_join_eui(const struct device *dev, lr1110_join_eui_t join_eui)
+{
+	lr1110_system_read_join_eui(context, join_eui);
+}
+
 static int lr1110_lora_init(const struct device *dev)
 {
 	LOG_DBG("Initializing %s", DT_INST_LABEL(0));
 
 	if (lr1110_configure_pin(reset, GPIO_OUTPUT_ACTIVE) ||
 	    lr1110_configure_pin(busy, GPIO_INPUT) ||
-	    lr1110_configure_pin(dio9, (GPIO_INPUT | GPIO_INT_DEBOUNCE)) ||
+	    lr1110_configure_pin(dio9, (GPIO_INPUT | GPIO_PULL_UP)) ||
 	    lr1110_configure_pin(rx_enable, GPIO_OUTPUT_INACTIVE) ||
 	    lr1110_configure_pin(tx_enable, GPIO_OUTPUT_INACTIVE)) {
 		return -EIO;

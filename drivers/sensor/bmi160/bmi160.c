@@ -934,6 +934,9 @@ int bmi160_init(const struct device *dev)
 		return -EINVAL;
 	}
 
+	LOG_DBG("initializing \"%s\" on bus \"%s\"",
+		dev->name, cfg->bus_label);
+
 	/* reboot the chip */
 	if (bmi160_byte_write(dev, BMI160_REG_CMD, BMI160_CMD_SOFT_RESET) < 0) {
 		LOG_DBG("Cannot reboot chip.");
