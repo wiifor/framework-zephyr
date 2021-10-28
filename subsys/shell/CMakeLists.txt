@@ -11,6 +11,11 @@ zephyr_sources_ifdef(
   )
 
 zephyr_sources_ifdef(
+  CONFIG_SHELL_BT_NUS
+  shell_bt_nus.c
+ )
+  
+zephyr_sources_ifdef(
   CONFIG_SHELL_BACKEND_SERIAL
   shell_uart.c
 )

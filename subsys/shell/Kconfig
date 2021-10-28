@@ -210,3 +210,5 @@ config SHELL_LOG_BACKEND
 source "subsys/shell/modules/Kconfig"
 
 endif # SHELL
+
+source "subsys/shell/Kconfig.shell_bt_nus"

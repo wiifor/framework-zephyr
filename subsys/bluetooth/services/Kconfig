@@ -16,4 +16,6 @@ source "subsys/bluetooth/services/Kconfig.tps"
 
 source "subsys/bluetooth/services/ots/Kconfig"
 
+source "subsys/bluetooth/services/Kconfig.nus"
+
 endmenu
