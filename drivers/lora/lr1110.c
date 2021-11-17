@@ -19,7 +19,7 @@
 
 #include <drivers/lora/lr1110.h>
 
-LOG_MODULE_REGISTER(lr1110, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(lr1110, LOG_LEVEL_INF);
 
 #define DT_DRV_COMPAT semtech_lr1110
 
@@ -203,6 +203,7 @@ lr1110_hal_status_t lr1110_hal_write(const void *context, const uint8_t *command
 			return LR1110_HAL_STATUS_OK;
 		}
 	}
+	LOG_ERR("Failed to write SPI (command 0x%02x 0x%02x)", command[0], command[1]);
 	return LR1110_HAL_STATUS_ERROR;
 }
 
@@ -243,7 +244,7 @@ lr1110_hal_status_t lr1110_hal_read(const void *context, const uint8_t *command,
 
 		return lr1110_hal_wait_on_busy(context);
 	}
-	LOG_ERR("Error during wake up");
+	LOG_ERR("Failed to read SPI (command 0x%02x 0x%02x)", command[0], command[1]);
 	return LR1110_HAL_STATUS_ERROR;
 }
 
@@ -281,7 +282,7 @@ lr1110_hal_status_t lr1110_hal_write_read(const void *context, const uint8_t *co
 			return LR1110_HAL_STATUS_OK;
 		}
 	}
-	LOG_ERR("Error during wake up");
+	LOG_ERR("Failed to write read SPI (command 0x%02x 0x%02x)", command[0], command[1]);
 	return LR1110_HAL_STATUS_ERROR;
 }
 
@@ -297,6 +298,8 @@ void lr1110_hal_reset(const void *context)
 
 lr1110_hal_status_t lr1110_hal_wakeup(const void *context)
 {
+	LOG_DBG("Waking up Lora chipset");
+
 	if ((lr1110_hal_get_operating_mode(context) == LR1110_HAL_OP_MODE_SLEEP) ||
 	    (lr1110_hal_get_operating_mode(context) == LR1110_HAL_OP_MODE_RX_DC)) {
 		// Send dummy byte to wake up the radio ready to accept commands
@@ -402,7 +405,7 @@ static int lr1110_lora_init(const struct device *dev)
 
 	if (lr1110_configure_pin(reset, GPIO_OUTPUT_ACTIVE) ||
 	    lr1110_configure_pin(busy, GPIO_INPUT) ||
-	    lr1110_configure_pin(dio9, (GPIO_INPUT | GPIO_PULL_UP)) ||
+	    lr1110_configure_pin(dio9, (GPIO_INPUT | GPIO_PULL_DOWN)) ||
 	    lr1110_configure_pin(rx_enable, GPIO_OUTPUT_INACTIVE) ||
 	    lr1110_configure_pin(tx_enable, GPIO_OUTPUT_INACTIVE)) {
 		return -EIO;
