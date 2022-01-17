@@ -39,4 +39,6 @@ int lr1110_lora_test_cw(const struct device *dev, uint32_t frequency,
 
 int lr1110_init(const struct device *dev);
 
+void lr1110_sleep();
+
 #endif /* ZEPHYR_DRIVERS_LR1110_GENERAL_H_ */

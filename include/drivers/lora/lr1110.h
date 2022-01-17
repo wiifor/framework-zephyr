@@ -48,6 +48,10 @@ void lr1110_read_uid(const struct device *dev,
  */
 void lr1110_read_join_eui(const struct device *dev, lr1110_join_eui_t join_eui);
 
+/**
+ * @brief Activates the sleep mode for the LR1110.
+ */
+void lr1110_sw_sleep();
 
 #ifdef __cplusplus
 }

@@ -157,3 +157,8 @@ int lr1110_init(const struct device *dev)
 	Radio.Sleep();
 	return 0;
 }
+
+void lr1110_sleep()
+{
+	Radio.Sleep();
+}

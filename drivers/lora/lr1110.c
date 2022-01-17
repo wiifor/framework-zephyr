@@ -399,6 +399,11 @@ void lr1110_read_join_eui(const struct device *dev, lr1110_join_eui_t join_eui)
 	lr1110_system_read_join_eui(context, join_eui);
 }
 
+void lr1110_sw_sleep()
+{
+	lr1110_sleep();
+}
+
 static int lr1110_lora_init(const struct device *dev)
 {
 	LOG_DBG("Initializing %s", DT_INST_LABEL(0));
