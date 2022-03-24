@@ -65,6 +65,10 @@
 		    gpios = <&gpio1 4 0>;
 			label = "Reed switch internal";
 		};
+		reedSwitchExternal: reed_switch_external {
+		    gpios = <&gpio0 28 0>;
+			label = "Reed switch external";
+		};
 		floodingSensor: flooding_sensor {
 			gpios = <&gpio0 31 0>;
 			label = "Flooding sensor";
