@@ -55,11 +55,19 @@
 		compatible = "gpio-keys";
 		button1: button_1 {
 			gpios = <&gpio0 22 0>;
-			label = "Push button switch 1 (SW1)";
+			label = "Push button";
 		};
-		reedSwitch: reed_switch {
+		pirSensor: pir_sensor {
+			gpios = <&gpio0 22 0>;
+			label = "PIR sensor";
+		};
+		reedSwitchInternal: reed_switch_internal {
 		    gpios = <&gpio1 4 0>;
-			label = "Reed switch";
+			label = "Reed switch internal";
+		};
+		floodingSensor: flooding_sensor {
+			gpios = <&gpio0 31 0>;
+			label = "Flooding sensor";
 		};
 		lightSensor: light_sensor {
 			gpios = <&gpio0 15 0>;
@@ -114,9 +122,11 @@
 		led0 = &led1;
 		led1 = &led2;
 		led2 = &led3;
-		sw0 = &button1;
-		sw1 = &reedSwitch;
-		sw2 = &lightSensor;
+		button-1 = &button1;
+		// pir-sensor = &pirSensor;
+		reed-switch = &reedSwitchInternal; // Change to reedSwitchExternal for external reed switch
+		// flooding-sensor = &floodingSensor;
+		light-sensor = &lightSensor;
 		/* These aliases are provided to improve code readability */
 		led-red = &led2;
 		led-green = &led3;
