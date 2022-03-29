@@ -203,7 +203,12 @@ static int max1726x_channel_get(const struct device *dev,
 	}
 	case SENSOR_CHAN_GAUGE_STATE_OF_CHARGE:
 		valp->val1 = data->state_of_charge / 256;
-		valp->val2 = data->state_of_charge % 256 * 1000000 / 256;
+		// Clipping of the state of charge value to not exceed 100%
+		if (valp->val1 >= 100) {
+			valp->val2 = 0;
+		} else {
+			valp->val2 = data->state_of_charge % 256 * 1000000 / 256;
+		}
 		break;
 	case SENSOR_CHAN_GAUGE_TEMP:
 		valp->val1 = data->internal_temp / 256;
