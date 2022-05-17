@@ -65,7 +65,7 @@
 	/* todo : s1613 - Implement drivers support like i2c in the device tree.
 	 * This device tree for now is minimalist and only configures the GPIOs.
 	 * https://docs.zephyrproject.org/latest/guides/dts/howtos.html
-     */
+	 */
 	battery_alarm {
 		compatible = "gpio-keys";
 		battery_alarm: battery_alarm {
@@ -293,10 +293,7 @@
 */
 
 &flash0 {
-	/*
-	 * For more information, see:
-	 * http://docs.zephyrproject.org/latest/guides/dts/index.html#flash-partitions
-	 */
+
 	partitions {
 		compatible = "fixed-partitions";
 		#address-cells = <1>;
@@ -304,24 +301,30 @@
 
 		boot_partition: partition@0 {
 			label = "mcuboot";
-			reg = <0x000000000 0x0000C000>;
+			reg = <0x000000000 0x0003a000>;
 		};
-		slot0_partition: partition@c000 {
+		slot0_partition: partition@3a000 {
 			label = "image-0";
-			reg = <0x0000C000 0x000067000>;
+			reg = <0x0003a000 0x000be000>;
 		};
-		slot1_partition: partition@73000 {
+		/*
+		 * Phantom partition: DO NOT USE
+		 * Only here to allow SMP server flags building
+		 * For more details see internal Gitlab project 'aurora' (README.md)
+		 */
+		slot1_partition: partition@3a001 {
 			label = "image-1";
-			reg = <0x00073000 0x000067000>;
-		};
-		scratch_partition: partition@da000 {
-			label = "image-scratch";
-			reg = <0x000da000 0x0001e000>;
+			reg = <0x0003a001 0x00000001>;
 		};
 
 		/*
 		 * The flash starting at 0x000f8000 and ending at
 		 * 0x000fffff is reserved for use by the application.
+		 */
+
+		/*
+		 * Storage partition will be used by FCB/LittleFS/NVS
+		 * if enabled.
 		 */
 		storage_partition: partition@f8000 {
 			label = "storage";
