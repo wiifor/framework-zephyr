@@ -272,9 +272,22 @@
 			label = "mcuboot";
 			reg = <0x000000000 0x0003a000>;
 		};
+		/*
+		 * Overlap "storage_partition"
+		 * Mandatory to update file system over the air
+		 *
+		 * The SMP server stops writing in flash when 
+		 * it reaches the end of the partition (here slot0). 
+		 * However, we want to transmit Janus (slot0) 
+		 * and the file system (storage_partition). 
+		 * By enlarging the slot0 partition we simulate a larger
+		 * image that would contain Janus and the file system.
+		 * Thus, the SMP server can write Janus and 
+		 * the file system in flash.
+		 */
 		slot0_partition: partition@3a000 {
 			label = "image-0";
-			reg = <0x0003a000 0x000be000>;
+			reg = <0x0003a000 0x000c6000>;
 		};
 		/*
 		 * Phantom partition: DO NOT USE
