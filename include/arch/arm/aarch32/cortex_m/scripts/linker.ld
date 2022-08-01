@@ -53,19 +53,24 @@
 #endif
 #endif
 
+/* define size of SHARED_RAM to 32 bytes */
+#define SHARED_RAM_SIZE 32
+
 #if defined(CONFIG_XIP)
 #if defined(CONFIG_IS_BOOTLOADER)
-#define RAM_SIZE (CONFIG_BOOTLOADER_SRAM_SIZE * 1K)
+#define RAM_SIZE (CONFIG_BOOTLOADER_SRAM_SIZE * 1K - SHARED_RAM_SIZE)
 #define RAM_ADDR (CONFIG_SRAM_BASE_ADDRESS + \
 	(CONFIG_SRAM_SIZE * 1K - RAM_SIZE))
 #else
-#define RAM_SIZE (CONFIG_SRAM_SIZE * 1K)
+#define RAM_SIZE ((CONFIG_SRAM_SIZE * 1K) - SHARED_RAM_SIZE)
 #define RAM_ADDR CONFIG_SRAM_BASE_ADDRESS
 #endif
 #else
-#define RAM_SIZE (CONFIG_SRAM_SIZE * 1K - CONFIG_BOOTLOADER_SRAM_SIZE * 1K)
+#define RAM_SIZE ((CONFIG_SRAM_SIZE * 1K - CONFIG_BOOTLOADER_SRAM_SIZE * 1K) - SHARED_RAM_SIZE)
 #define RAM_ADDR CONFIG_SRAM_BASE_ADDRESS
 #endif
+
+#define SHARED_RAM_ADDR (RAM_ADDR + RAM_SIZE)
 
 #if defined(CONFIG_CUSTOM_SECTION_ALIGN)
 _region_min_align = CONFIG_CUSTOM_SECTION_MIN_ALIGN_SIZE;
@@ -94,6 +99,7 @@ MEMORY
     {
     FLASH                 (rx) : ORIGIN = ROM_ADDR, LENGTH = ROM_SIZE
 	SRAM                  (wx) : ORIGIN = RAM_ADDR, LENGTH = RAM_SIZE
+	SHARED_RAM            (wx) : ORIGIN = SHARED_RAM_ADDR, LENGTH = SHARED_RAM_SIZE
     /* TI CCFG Registers */
     DT_REGION_FROM_NODE_STATUS_OKAY(FLASH_CCFG, rwx, DT_NODELABEL(ti_ccfg_partition))
 #ifdef CONFIG_DISK_DRIVER_FLASH
@@ -114,7 +120,7 @@ MEMORY
     DT_REGION_FROM_NODE_STATUS_OKAY(SDRAM2, rw, DT_NODELABEL(sdram2))
     DT_REGION_FROM_NODE_STATUS_OKAY(BACKUP_SRAM, rw, DT_NODELABEL(backup_sram))
     /* Used by and documented in include/linker/intlist.ld */
-    IDT_LIST  (wx)      : ORIGIN = (RAM_ADDR + RAM_SIZE), LENGTH = 2K
+    IDT_LIST  (wx)      : ORIGIN = (SHARED_RAM_ADDR + SHARED_RAM_SIZE), LENGTH = 2K
     }
 
 ENTRY(CONFIG_KERNEL_ENTRY)
@@ -400,6 +406,15 @@ SECTIONS
     __kernel_ram_size = __kernel_ram_end - __kernel_ram_start;
 
     GROUP_END(RAMABLE_REGION)
+
+GROUP_START(SHARED_RAM)
+
+    SECTION_PROLOGUE(shared_boot_command,(NOLOAD),)
+    {
+        *(.shared_boot_command)
+    } GROUP_LINK_IN(SHARED_RAM)
+
+GROUP_END(SHARED_RAM)
 
 #if DT_NODE_HAS_STATUS(DT_CHOSEN(zephyr_itcm), okay)
 GROUP_START(ITCM)
