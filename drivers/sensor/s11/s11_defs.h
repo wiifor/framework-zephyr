@@ -1,15 +1,15 @@
 /**
  * BSD 3-Clause License
- * 
+ *
  * Copyright (c) 2021, Jhonatan Napadow
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
@@ -17,7 +17,7 @@
  * 3. Neither the name of the copyright holder nor the names of its
  *    contributors may be used to endorse or promote products derived from
  *    this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -38,12 +38,30 @@
  *
  */
 
+/**
+ * Copyright (c) 2022 Wiifor SAS
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ **/
+
+/*
+ * @brief Source code for Senseair Sunrise HVAC (s11) sensor driver
+ * adapted for Framework Zephyr
+ * @file s11_defs.h
+ * @date 2022-08-08
+ * @author Nicolas Pelissier
+ *
+ */
+
 #ifndef S11_DEFS_H_17
 #define S11_DEFS_H_
 
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+
+#include <device.h>
+#include <zephyr/types.h>
 
 // Default
 #define S11_DEF_I2C_ADDR (0x68) ///< Default I2C address
@@ -222,7 +240,10 @@
 
 /// @name Time constants
 /// @{
-#define S11_EE_WR_DELAY_MS (25) ///< Wait time between EEPROM writes
+/* Use 107 ms for 006-0-0008 article (Sunrise HVAC)
+ * & 25 ms for 006-0-0002 & 006-0-0007 article (Sunrise)
+ */
+#define S11_EE_WR_DELAY_MS (107) ///< Wait time between EEPROM writes
 #define S11_RESTART_DELAY_MS (35) ///< Wait time for sensor to boot
 /// @}
 
@@ -230,13 +251,14 @@
 /// @{
 
 /// Type definition for read/write function pointer
-typedef int8_t (*s11_rw_fptr_t)(uint8_t i2c_addr, uint8_t reg_addr, uint8_t *data, uint8_t len);
+typedef int8_t (*s11_rw_fptr_t)(const struct device *i2c_master, uint16_t i2c_slave,
+				uint8_t reg_addr, uint8_t *data, uint8_t len);
 
 /// Type definition for delay function pointer
 typedef int8_t (*s11_delay_fptr_t)(uint32_t period);
 ///@}
 
-/** 
+/**
 * @brief This structure contains measurement variables and data
 * @ingroup measurement
 * @details
@@ -340,8 +362,10 @@ struct s11_dev_sett {
 * P = private variable, internal use, do not read/write
 */
 struct s11_dev {
-	/// I2C address to use for communication (W)
-	uint8_t i2c_address;
+	/// I2C master to use for communication (W)
+	const struct device *i2c_master;
+	/// I2C slave address to use for communication (W)
+	uint16_t i2c_slave_addr;
 	/// Error status (R)
 	uint16_t error_status;
 	/// Measurement results

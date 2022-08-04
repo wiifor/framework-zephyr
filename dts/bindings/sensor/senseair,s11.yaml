@@ -1,0 +1,11 @@
+# Copyright (c) 2022 Wiifor SAS
+#
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+    The Senseair Sunrise HVAC (s11) is an integrated environmental
+    sensor that measures air quality
+
+compatible: "senseair,s11"
+
+include: i2c-device.yaml

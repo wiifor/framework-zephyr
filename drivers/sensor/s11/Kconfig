@@ -1,0 +1,10 @@
+# Senseair Sunrise HVAC (s11) sensor configuration options
+
+# Copyright (c) 2022 Wiifor
+# SPDX-License-Identifier: Apache-2.0
+
+config S11
+	bool "Senseair Sunrise HVAC (s11) Sensor"
+	depends on I2C
+	help
+	  Enable driver for Senseair Sunrise HVAC (s11) sensors.

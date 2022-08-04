@@ -1,15 +1,15 @@
 /**
  * BSD 3-Clause License
- * 
+ *
  * Copyright (c) 2021, Jhonatan Napadow
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
@@ -17,7 +17,7 @@
  * 3. Neither the name of the copyright holder nor the names of its
  *    contributors may be used to endorse or promote products derived from
  *    this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,10 +35,33 @@
  * @file s11.c
  * @date 2021-03-11
  * @author Jhonatan Napadow
- * 
+ *
  */
 
+/**
+ * Copyright (c) 2022 Wiifor SAS
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ **/
+
+/*
+ * @brief Source code for Senseair Sunrise HVAC (s11) sensor driver
+ * adapted for Framework Zephyr
+ * @file s11.c
+ * @date 2022-08-08
+ * @author Nicolas Pelissier
+ *
+ */
+
+#define DT_DRV_COMPAT senseair_s11
+
+#include <drivers/i2c.h>
+#include <drivers/sensor.h>
+#include <logging/log.h>
+
 #include "s11.h"
+
+LOG_MODULE_REGISTER(s11, CONFIG_SENSOR_LOG_LEVEL);
 
 /*******************************************************************************/
 /*                        Private function declarations                        */
@@ -49,12 +72,13 @@ uint8_t s11_u16_to_msb(uint16_t val);
 uint8_t s11_u16_to_lsb(uint16_t val);
 int8_t s11_read(struct s11_dev *dev, uint8_t reg_addr, uint8_t *data, uint8_t len);
 int8_t s11_write(struct s11_dev *dev, uint8_t reg_addr, uint8_t *data, uint8_t len);
+int8_t s11_delay(struct s11_dev *dev, uint32_t period);
 
 /*******************************************************************************/
 /*                        Private function definitions                         */
 /*******************************************************************************/
 
-/** 
+/**
  * @brief Private helper function that checks that all pointers in device
  * structure are non-null.
  **/
@@ -70,7 +94,7 @@ int8_t s11_null_ptr_check(struct s11_dev *dev)
 }
 
 /**
- * @brief Private helper function that concatenates two 
+ * @brief Private helper function that concatenates two
  * uint8_t to uint16_t
  **/
 uint16_t s11_u8_to_u16(uint8_t msb, uint8_t lsb)
@@ -79,7 +103,7 @@ uint16_t s11_u8_to_u16(uint8_t msb, uint8_t lsb)
 }
 
 /**
- * @brief Private helper function that concatenates two 
+ * @brief Private helper function that concatenates two
  * uint8_t to uint16_t
  **/
 uint32_t s11_u8_to_u32(uint8_t mmsb, uint8_t mlsb, uint8_t lmsb, uint8_t llsb)
@@ -89,7 +113,7 @@ uint32_t s11_u8_to_u32(uint8_t mmsb, uint8_t mlsb, uint8_t lmsb, uint8_t llsb)
 }
 
 /**
- * @brief Private helper function that extract msb from u16 
+ * @brief Private helper function that extract msb from u16
  **/
 uint8_t s11_u16_to_msb(uint16_t val)
 {
@@ -97,7 +121,7 @@ uint8_t s11_u16_to_msb(uint16_t val)
 }
 
 /**
- * @brief Private helper function that extract lsb from u16 
+ * @brief Private helper function that extract lsb from u16
  **/
 uint8_t s11_u16_to_lsb(uint16_t val)
 {
@@ -113,7 +137,7 @@ int8_t s11_read(struct s11_dev *dev, uint8_t reg_addr, uint8_t *data, uint8_t le
 	res = s11_null_ptr_check(dev);
 	if (res == S11_E_OK) {
 		// Call the sensors read method
-		res = dev->read(dev->i2c_address, reg_addr, data, len);
+		res = dev->read(dev->i2c_master, dev->i2c_slave_addr, reg_addr, data, len);
 	}
 	return res;
 }
@@ -126,8 +150,15 @@ int8_t s11_write(struct s11_dev *dev, uint8_t reg_addr, uint8_t *data, uint8_t l
 	int8_t res;
 	res = s11_null_ptr_check(dev);
 	if (res == S11_E_OK) {
-		// Call the sensors write method
-		res = dev->write(dev->i2c_address, reg_addr, data, len);
+		// Write Byte by Byte with a chip restart beetween each Byte
+		// to write values properly
+		for (uint8_t i = 0; i < len; i++) {
+			// Call the sensors write method
+			res = dev->write(dev->i2c_master, dev->i2c_slave_addr, reg_addr + i,
+					 data + i, 1);
+			s11_delay(dev, S11_EE_WR_DELAY_MS);
+			s11_restart(dev);
+		}
 	}
 	return res;
 }
@@ -220,7 +251,12 @@ int8_t s11_restart(struct s11_dev *dev)
 	if (res == S11_E_OK) {
 		// Read dev settings from sensor
 		dev->data[0] = S11_RESET;
-		res = s11_write(dev, S11_ADDR_RESET, dev->data, 1);
+		/* Original s11_restart use s11_write function.
+		 * To avoid I2C issues, s11_restart is used in s11_write function.
+		 * The 'write' callback is used directly to avoid loop between s11_write & s11_restart
+		 */
+		dev->write(dev->i2c_master, dev->i2c_slave_addr, S11_ADDR_RESET, dev->data, 1);
+		s11_delay(dev, S11_RESTART_DELAY_MS);
 	}
 	return res;
 }
@@ -410,7 +446,6 @@ int8_t s11_get_dev_settings(struct s11_dev *dev)
 int8_t s11_set_dev_settings(struct s11_dev *dev)
 {
 	int8_t res;
-	bool restart = false;
 	// Check valid pointer
 	res = s11_null_ptr_check(dev);
 	if (res != S11_E_OK)
@@ -435,10 +470,13 @@ int8_t s11_set_dev_settings(struct s11_dev *dev)
 	if ((dev->dev_sett.iir_static_parameter < 2) || (dev->dev_sett.iir_static_parameter > 10)) {
 		return S11_E_VAL_OUT_OF_LIMIT;
 	}
-	if ((dev->dev_sett.meter_control < 0) ||
-	    (dev->dev_sett.meter_control > 31)) { //31= 0b00011111 // todo, wrong limits/values
+	/* The following check is disabled because it does not make sense
+	 * with desired configuration.
+	 */
+	/*if ((dev->dev_sett.meter_control < 0) ||
+	    (dev->dev_sett.meter_control > 255)) { //31= 0b00011111 // todo, wrong limits/values
 		return S11_E_VAL_OUT_OF_LIMIT;
-	}
+	}*/
 	if ((dev->dev_sett.address < 1) || (dev->dev_sett.address > 127)) {
 		return S11_E_VAL_OUT_OF_LIMIT;
 	}
@@ -453,9 +491,7 @@ int8_t s11_set_dev_settings(struct s11_dev *dev)
 				dev->data[0] = dev->dev_sett.meas_mode;
 				// Write new value
 				res = s11_write(dev, S11_ADDR_DEV_MEAS_MODE, dev->data, 1);
-				s11_delay(dev, S11_EE_WR_DELAY_MS);
 				dev->dev_sett.write_count++;
-				restart = true;
 			}
 		}
 	}
@@ -472,9 +508,7 @@ int8_t s11_set_dev_settings(struct s11_dev *dev)
 				dev->data[1] = s11_u16_to_lsb(dev->dev_sett.meas_period);
 				// Write new value
 				res = s11_write(dev, S11_ADDR_DEV_MEAS_PER_MSB, dev->data, 2);
-				s11_delay(dev, S11_EE_WR_DELAY_MS);
 				dev->dev_sett.write_count++;
-				restart = true;
 			}
 		}
 	}
@@ -491,9 +525,7 @@ int8_t s11_set_dev_settings(struct s11_dev *dev)
 				dev->data[1] = s11_u16_to_lsb(dev->dev_sett.meas_nb_samples);
 				// Write new value
 				res = s11_write(dev, S11_ADDR_DEV_NB_SAMP_MSB, dev->data, 2);
-				s11_delay(dev, S11_EE_WR_DELAY_MS);
 				dev->dev_sett.write_count++;
-				restart = true;
 			}
 		}
 	}
@@ -509,9 +541,7 @@ int8_t s11_set_dev_settings(struct s11_dev *dev)
 				dev->data[1] = s11_u16_to_lsb(dev->dev_sett.abc_period);
 				// Write new value
 				res = s11_write(dev, S11_ADDR_ABC_PER_MSB, dev->data, 2);
-				s11_delay(dev, S11_EE_WR_DELAY_MS);
 				dev->dev_sett.write_count++;
-				restart = true;
 			}
 		}
 	}
@@ -527,9 +557,7 @@ int8_t s11_set_dev_settings(struct s11_dev *dev)
 				dev->data[1] = s11_u16_to_lsb(dev->dev_sett.abc_target);
 				// Write new value
 				res = s11_write(dev, S11_ADDR_ABC_TARGET_MSB, dev->data, 2);
-				s11_delay(dev, S11_EE_WR_DELAY_MS);
 				dev->dev_sett.write_count++;
-				restart = true;
 			}
 		}
 	}
@@ -544,9 +572,7 @@ int8_t s11_set_dev_settings(struct s11_dev *dev)
 				dev->data[0] = dev->dev_sett.iir_static_parameter;
 				// Write new value
 				res = s11_write(dev, S11_ADDR_IIR_STAT_PAR, dev->data, 1);
-				s11_delay(dev, S11_EE_WR_DELAY_MS);
 				dev->dev_sett.write_count++;
-				restart = true;
 			}
 		}
 	}
@@ -561,9 +587,7 @@ int8_t s11_set_dev_settings(struct s11_dev *dev)
 				dev->data[0] = dev->dev_sett.meter_control;
 				// Write new value
 				res = s11_write(dev, S11_ADDR_DEV_METER_CTL, dev->data, 1);
-				s11_delay(dev, S11_EE_WR_DELAY_MS);
 				dev->dev_sett.write_count++;
-				restart = true;
 			}
 		}
 	}
@@ -578,17 +602,112 @@ int8_t s11_set_dev_settings(struct s11_dev *dev)
 				dev->data[0] = dev->dev_sett.address;
 				// Write new value
 				res = s11_write(dev, S11_ADDR_DEV_ADDR, dev->data, 1);
-				s11_delay(dev, S11_EE_WR_DELAY_MS);
 				dev->dev_sett.write_count++;
-				restart = true;
 			}
 		}
 	}
 
-	// Restart sensor if writing to EE has occured
-	if (restart) {
-		s11_restart(dev);
-		s11_delay(dev, S11_RESTART_DELAY_MS);
-	}
 	return res;
 }
+
+static int s11_sample_fetch(const struct device *dev, enum sensor_channel chan)
+{
+	struct s11_dev *s11_device = dev->data;
+
+	if (s11_get_meas_data(s11_device) != S11_E_OK) {
+		return -EIO;
+	}
+
+	return 0;
+}
+
+static int s11_channel_get(const struct device *dev, enum sensor_channel chan,
+			   struct sensor_value *val)
+{
+	struct s11_dev *s11_device = dev->data;
+
+	switch (chan) {
+	case SENSOR_CHAN_CO2:
+		val->val1 = s11_device->meas_res.co2_fp;
+		val->val2 = 0;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+int8_t sensor_read(const struct device *i2c_master, uint16_t i2c_slave, uint8_t reg_addr,
+		   uint8_t *data, uint8_t len)
+{
+	if (i2c_burst_read(i2c_master, i2c_slave, reg_addr, data, len)) {
+		return S11_E_I2C;
+	}
+
+	return S11_E_OK;
+}
+
+int8_t sensor_write(const struct device *i2c_master, uint16_t i2c_slave, uint8_t reg_addr,
+		    uint8_t *data, uint8_t len)
+{
+	if (i2c_burst_write(i2c_master, i2c_slave, reg_addr, data, len)) {
+		return S11_E_I2C;
+	}
+
+	return S11_E_OK;
+}
+
+int8_t sensor_delay_ms(uint32_t period)
+{
+	k_msleep(period);
+
+	return S11_E_OK;
+}
+
+static int s11_chip_init(const struct device *dev)
+{
+	struct s11_dev *s11_device = dev->data;
+	int8_t res;
+
+	s11_device->i2c_master = device_get_binding(DT_INST_BUS_LABEL(0));
+
+	if (s11_device->i2c_master == NULL) {
+		LOG_ERR("Failed to get pointer to %s device!", DT_INST_BUS_LABEL(0));
+		return -EINVAL;
+	}
+
+	s11_device->i2c_slave_addr = DT_INST_REG_ADDR(0);
+
+	s11_device->write = sensor_write;
+	s11_device->read = sensor_read;
+	s11_device->delay = sensor_delay_ms;
+
+	res = s11_init(s11_device);
+
+	if (res == S11_E_OK) {
+		/* Sensor is configured in continuous mode with measurement
+		 * every 5 minutes and with 8 samples per measurement.
+		 */
+		s11_device->dev_sett.meas_mode = S11_MM_STATE_CONT_MEAS;
+		s11_device->dev_sett.meas_period = 300;
+		s11_device->dev_sett.meas_nb_samples = 8;
+		res = s11_set_dev_settings(s11_device);
+	}
+
+	if (res != S11_E_OK) {
+		return -EIO;
+	}
+
+	return 0;
+}
+
+static const struct sensor_driver_api s11_driver_api = {
+	.sample_fetch = s11_sample_fetch,
+	.channel_get = s11_channel_get,
+};
+
+static struct s11_dev s11_device;
+
+DEVICE_DT_INST_DEFINE(0, s11_chip_init, NULL, &s11_device, NULL, POST_KERNEL,
+		      CONFIG_SENSOR_INIT_PRIORITY, &s11_driver_api);

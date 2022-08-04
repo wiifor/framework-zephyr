@@ -1,15 +1,15 @@
 /**
  * BSD 3-Clause License
- * 
+ *
  * Copyright (c) 2021, Jhonatan Napadow
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
@@ -17,7 +17,7 @@
  * 3. Neither the name of the copyright holder nor the names of its
  *    contributors may be used to endorse or promote products derived from
  *    this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -37,19 +37,34 @@
  * @author Jhonatan Napadow
  */
 
+/**
+ * Copyright (c) 2022 Wiifor SAS
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ **/
+
+/*
+ * @brief Source code for Senseair Sunrise HVAC (s11) sensor driver
+ * adapted for Framework Zephyr
+ * @file s11.h
+ * @date 2022-08-08
+ * @author Nicolas Pelissier
+ *
+ */
+
 /** @defgroup core Driver core
  * API functions for interacting with the driver
- * 
+ *
  * Setup sensor:
  * - Instantiate a s11_dev struct
  * - Add callbacks to s11_dev
  * - Write I2C address to s11_dev.i2c_address
  * - Call s11_init()
- * 
- * 
+ *
+ *
  * The driver is platform-agnostic so the user must adapt it by implementing read/write/delay wrappers
  * that are platform-specific.
- * 
+ *
  * The following callbacks must be implemented:
  * - Register a I2C read callback, s11_rw_fptr_t to s11_dev.read
  * - Register a I2C write callback, s11_rw_fptr_t to s11_dev.read
@@ -61,39 +76,39 @@
  * The callback must have the same format as s11_rw_fptr_t
  *
  *
- * The read callback must implement the follwoing I2C sequence: 
+ * The read callback must implement the follwoing I2C sequence:
  * - START + Slave address + R/W=0
  * - STOP
- * 
+ *
  * - START + Slave address + R/W=0
  * - Write: Register address
  * - STOP
- * 
+ *
  * - START + Slave address + R/W=1
  * - Read: Data (n)
  * - Read: Data (n+1)
  * - ...
  * - Read: Data (n+len)
  * - STOP
- *  
+ *
  * **Write callback**
  * The write callback must implement the follwoing I2C sequence:
  * The read callback must implement the follwoing I2C sequence:
  * - START + Slave address + R/W=0
  * - STOP
- * 
+ *
  * - START + Slave address + R/W=0
- * - Write: Register address 
+ * - Write: Register address
  * - Write: Data (n)
  * - Write: Data (n+1)
  * - ...
  * - Write: Data (n+len)
- * - STOP 
+ * - STOP
  */
 
 /** @defgroup calibration Calibration
  * API for (re-)calibration of sensor
- * 
+ *
  * Usage:
  * - Select calibration method by setting bits in s11_cal.cal_cmd register
  * - Set calibration target value in ppm in s11_cal.cal_target register (if performing a target calibration)
@@ -104,7 +119,7 @@
 
 /** @defgroup measurement Measurement
  * API for measuring CO2
- * 
+ *
  * Single measurement mode:
  * - Call s11_start_meas()
  * - Wait for nREADY pin to go hi
@@ -126,7 +141,7 @@
  * Writing settings:
  * - Set registers in s11_dev.s11_dev_sett to desired values
  * - Call s11_set_dev_settings()
- *  
+ *
  * Reading settings:
  * - Call s11_get_dev_settings()
  * - Read current settings from register s11_dev.s11_dev_sett
@@ -168,14 +183,14 @@ int8_t s11_get_status(struct s11_dev *dev);
  */
 int8_t s11_get_sensor_info(struct s11_dev *dev);
 
-/** 
+/**
  * @brief Read the sensors calibration status
  * @param[in,out] dev : Instance of S11 structure
  * @ingroup calibration
  */
 int8_t s11_get_cal_status(struct s11_dev *dev);
 
-/** 
+/**
  * @brief Perform the sensors built-in calibration routine
  * and retrieve calibration status afterwards
  * @param[in,out] dev : Instance of S11 structure
@@ -205,16 +220,16 @@ int8_t s11_get_meas_data(struct s11_dev *dev);
 */
 int8_t s11_get_state_data(struct s11_dev *dev);
 
-/** 
+/**
  * @brief Read sensor settings from EEPROM
  * - Read settings from sensor to s11_dev_sett struct
- * 
+ *
  * @param[in,out] dev : Instance of S11 structure
  * @ingroup settings
  */
 int8_t s11_get_dev_settings(struct s11_dev *dev);
 
-/** 
+/**
  * @brief Apply sensor settings to EEPROM and restart sensor
  * - Applies settings in s11_dev_sett struct to sensor
  * - Performs a limit check of parameters before any write
@@ -226,7 +241,7 @@ int8_t s11_get_dev_settings(struct s11_dev *dev);
  */
 int8_t s11_set_dev_settings(struct s11_dev *dev);
 
-/** 
+/**
  * @brief Restart sensor
  * @param[in,out] dev : Instance of S11 structure
  * @ingroup core
