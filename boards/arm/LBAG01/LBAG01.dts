@@ -1,0 +1,349 @@
+/*
+ * Copyright (c) 2022 Wiifor
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+#include <nordic/nrf52840_qiaa.dtsi>
+#include "dt-bindings/lora/lr1110.h"
+
+/ {
+	model = "LBAG01 board";
+	compatible = "nordic,pca10056-dk";
+
+	chosen {
+		zephyr,console = &uart0;
+		zephyr,uart-mcumgr = &uart0;
+		zephyr,bt-mon-uart = &uart0;
+		zephyr,bt-c2h-uart = &uart0;
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+		zephyr,code-partition = &slot0_partition;
+	};
+
+	/* Use to control leds with the GPIO driver */
+	leds {
+		compatible = "gpio-leds";
+		led1: led_1 {
+			gpios = <&gpio0 21 0>;
+			label = "Blue LED";
+		};
+		led2: led_2 {
+			gpios = <&gpio0 19 0>;
+			label = "Red LED";
+		};
+		led3: led_3 {
+			gpios = <&gpio0 20 0>;
+			label = "Green LED";
+		};
+	};
+
+	power {
+		compatible = "gpio-keys";
+		power3v3: power_3v3 {
+			gpios = <&gpio1 2 0>;
+			label = "power 3V3";
+		};
+		powerVbat: power_Vbat {
+			gpios = <&gpio0 25 0>;
+			label = "power VBAT";
+		};
+	};
+
+	buttons {
+		compatible = "gpio-keys";
+		button1: button_1 {
+			gpios = <&gpio0 22 0>;
+			label = "Push button";
+		};
+		pirSensor: pir_sensor {
+			gpios = <&gpio0 22 0>;
+			label = "PIR sensor";
+		};
+		reedSwitchInternal: reed_switch_internal {
+			gpios = <&gpio1 4 0>;
+			label = "Reed switch internal";
+		};
+		reedSwitchExternal: reed_switch_external {
+			gpios = <&gpio0 28 0>;
+			label = "Reed switch external";
+		};
+		floodingSensor: flooding_sensor {
+			gpios = <&gpio0 31 0>;
+			label = "Flooding sensor";
+		};
+		lightSensor: light_sensor {
+			gpios = <&gpio0 15 0>;
+			label = "Light sensor";
+		};
+	};
+
+	Battery_meas {
+		compatible = "gpio-keys";
+		enableBattMeas: enable_batt_meas {
+			gpios = <&gpio0 24 0>;
+			label = "En battery measure";
+		};
+		battMeasvalue: batt_meas_ready {
+			gpios = <&gpio1 11 0>;
+			label = "battery value";
+		};
+	};
+
+	/* Should be included in sunrise driver */
+	CO2_sensor {
+		compatible = "gpio-keys";
+		co2Enable: co2_enable {
+			gpios = <&gpio1 7 0>;
+			label = "En co2 sensor";
+		};
+		co2Ready: co2_ready {
+			gpios = <&gpio1 11 0>;
+			label = "Co2 sensor ready";
+		};
+	};
+
+	VM_IA {
+		compatible = "gpio-keys";
+		iaEnable: ia_enable {
+			gpios = <&gpio1 6 0>;
+			label = "enable VM IA";
+		};	
+		iaReset: ia_reset {
+			gpios = <&gpio1 13 0>;
+			label = "Reset VM IA";
+		};
+		iaInt: int {
+			gpios = <&gpio1 3 0>;
+			label = "Interrupt VM IA";
+		};	
+	};
+
+	SENS_GPIO {
+		compatible = "gpio-keys";
+		sens_gpio1: SENS_GPIO1 {
+			gpios = <&gpio0 16 0>;
+			label = "RS485 TX enable";
+		};
+		sens_gpio2: SENS_GPIO2 {
+			gpios = <&gpio0 30 0>;
+			label = "RS485 RX enable";
+		};
+		sens_gpio5: SENS_GPIO5 {
+			gpios = <&gpio0 3 0>;
+			label = "RS485 TX";
+		};
+		sens_gpio6: SENS_GPIO6 {
+			gpios = <&gpio1 14 0>;
+			label = "RS485 RX";
+		};
+
+	};
+
+	/* Use to control leds with the PWM-LEDS driver */
+	pwmleds {
+		compatible = "pwm-leds";
+		pwm_led0: pwm_led_0 {
+			pwms = <&sw_pwm 19>;
+			label = "Red PWM LED";
+		};
+	};
+
+	aliases {
+		/* These aliases are provided for compatibility with samples */
+		led0 = &led1;
+		led1 = &led2;
+		led2 = &led3;
+		button-1 = &button1;
+		// pir-sensor = &pirSensor;
+		reed-switch = &reedSwitchInternal; // Change to reedSwitchExternal for external reed switch
+		// flooding-sensor = &floodingSensor;
+		light-sensor = &lightSensor;
+		/* These aliases are provided to improve code readability */
+		led-red = &led2;
+		led-green = &led3;
+		led-blue = &led1;
+		red-pwm-led = &pwm_led0;
+		lora0 = &lora;
+	};
+};
+
+/* The RTC is used instead of nordic Timer due to power consumption contrainst.
+ * It means there is only 2 PWM channels instead of 3 (with a timer)
+ * and the prescaler has to be set to 0
+ */
+&sw_pwm {
+	compatible = "nordic,nrf-sw-pwm";
+	status = "okay";
+	label = "SW_PWM";
+	generator = <&rtc0>;
+	channel-count = <2>;
+	clock-prescaler = <0>;
+	ppi-base = <0>;
+	gpiote-base = <0>;
+	#pwm-cells = <1>;
+};
+
+&adc {
+	status = "okay";
+};
+
+&gpiote {
+	status = "okay";
+};
+
+&gpio0 {
+	status = "okay";
+};
+
+&gpio1 {
+	status = "okay";
+};
+
+&uart0 {
+	compatible = "nordic,nrf-uart";
+	current-speed = <115200>;
+	status = "okay";
+	tx-pin = <42>;
+	rx-pin = <37>;
+};
+
+
+&uart1 {
+	current-speed = <250000>;
+	status = "okay";
+	tx-pin = <17>;
+	rx-pin = <14>;
+};
+
+
+&i2c0 {
+	compatible = "nordic,nrf-twi";
+	status = "okay";
+	sda-pin = <26>;
+	scl-pin = <27>;
+	bme280:bme280@76 {
+		compatible = "bosch,bme280";
+		reg = <0x76>;
+		label = "BME280";
+	};
+	opt3001:opt3001@44 {
+		compatible = "ti,opt3001";
+		label = "OPT3001";
+		reg = <0x44>;
+	};
+	bme680:bme680@77 {
+		compatible = "bosch,bme680";
+		reg = <0x77>;
+		label = "BME680";
+	};
+	s11:s11@68 {
+		compatible = "senseair,s11";
+		reg = <0x68>;
+		label = "S11";
+	};
+	sgp40: sgp40@59 {
+		compatible = "sensirion,sgp40";
+		reg = <0x59>;
+		label = "SGP40";
+	};
+};
+
+/*
+&i2c1 {
+	compatible = "nordic,nrf-twi";
+	status = "okay";
+	sda-pin = <40>;
+	scl-pin = <4>;
+};
+*/
+
+&spi1 {
+	compatible = "nordic,nrf-spi";
+	status = "okay";
+	sck-pin = <8>;
+	mosi-pin = <40>;
+	miso-pin = <4>;
+	cs-gpios = <&gpio0 6 GPIO_ACTIVE_LOW>,
+				<&gpio0 5 0>;
+	lora: lr1110@0 {
+		compatible = "semtech,lr1110";
+		reg = <0x0>;
+		label = "lr1110";
+		reset-gpios = <&gpio0 29 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		busy-gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
+		dio9-gpios = <&gpio1 15 GPIO_ACTIVE_HIGH>;
+		rf-switch-enable = <(LR1110_SYSTEM_RFSW0_HIGH | LR1110_SYSTEM_RFSW1_HIGH)>;
+		rf-switch-tx = <LR1110_SYSTEM_RFSW1_HIGH>;
+		rf-switch-rx = <LR1110_SYSTEM_RFSW0_HIGH>;
+		spi-max-frequency = <1000000>;
+	};
+	w5500: w5500@1 {
+		compatible = "wiznet,w5500";
+		reg = <0x1>;
+		label = "w5500";
+		reset-gpios = <&gpio0 0 0>;
+		int-gpios = <&gpio1 0 12>;
+		spi-max-frequency = <0>;
+	};
+};
+
+&flash0 {
+
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		boot_partition: partition@0 {
+			label = "mcuboot";
+			reg = <0x000000000 0x0003a000>;
+		};
+		/*
+		 * Overlap "storage_partition"
+		 * Mandatory to update file system over the air
+		 *
+		 * The SMP server stops writing in flash when 
+		 * it reaches the end of the partition (here slot0). 
+		 * However, we want to transmit Janus (slot0) 
+		 * and the file system (storage_partition). 
+		 * By enlarging the slot0 partition we simulate a larger
+		 * image that would contain Janus and the file system.
+		 * Thus, the SMP server can write Janus and 
+		 * the file system in flash.
+		 */
+		slot0_partition: partition@3a000 {
+			label = "image-0";
+			reg = <0x0003a000 0x000c6000>;
+		};
+		/*
+		 * Phantom partition: DO NOT USE
+		 * Only here to allow SMP server flags building
+		 * For more details see internal Gitlab project 'aurora' (README.md)
+		 */
+		slot1_partition: partition@3a001 {
+			label = "image-1";
+			reg = <0x0003a001 0x00000001>;
+		};
+
+		/*
+		 * The flash starting at 0x000f8000 and ending at
+		 * 0x000fffff is reserved for use by the application.
+		 */
+
+		/*
+		 * Storage partition will be used by FCB/LittleFS/NVS
+		 * if enabled.
+		 */
+		storage_partition: partition@f8000 {
+			label = "storage";
+			reg = <0x000f8000 0x00008000>;
+		};
+	};
+};
+
+&usbd {
+	compatible = "nordic,nrf-usbd";
+	status = "okay";
+};
