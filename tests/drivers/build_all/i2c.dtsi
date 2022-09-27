@@ -59,6 +59,18 @@ test_i2c_bme280: bme280@7 {
 	reg = <0x7>;
 };
 
+test_i2c_at24: at24@8 {
+	compatible = "atmel,at24";
+	label = "AT24";
+	reg = <0x8>;
+	size = <0>;
+	pagesize = <0>;
+	address-width = <0>;
+	timeout = <0>;
+	wp-gpios = <&test_gpio 0 0>;
+	/* read-only; */
+};
+
 test_i2c_apds9960: apds9960@9 {
 	compatible = "avago,apds9960";
 	label = "APDS9960";
@@ -174,12 +186,6 @@ test_i2c_max44009: max44009@19 {
 	int-gpios = <&test_gpio 0 0>;
 };
 
-test_i2c_ms5607: ms5607@76 {
-	compatible = "meas,ms5607";
-	label = "MS5607";
-	reg = <0x76>;
-};
-
 test_i2c_ms5837: ms5837@1a {
 	compatible = "meas,ms5837";
 	label = "MS5837";
@@ -210,6 +216,15 @@ test_i2c_fxos8700: fxos8700@1d {
 	int2-gpios = <&test_gpio 0 0>;
 };
 
+test_i2c_pca95xx: pca95xx@1e {
+	compatible = "nxp,pca95xx";
+	label = "PCA95XX";
+	reg = <0x1e>;
+	/* has-pud; */
+	#gpio-cells = <2>;
+	gpio-controller;
+};
+
 test_i2c_pca9633: pca9633@1f {
 	compatible = "nxp,pca9633";
 	label = "PCA9633";
@@ -221,6 +236,15 @@ test_i2c_amg88xx: amg88xx@20 {
 	label = "AMG88XX";
 	reg = <0x20>;
 	int-gpios = <&test_gpio 0 0>;
+};
+
+test_i2c_sx1509b: sx1509b@21 {
+	compatible = "semtech,sx1509b";
+	label = "SX1509B";
+	reg = <0x21>;
+	#gpio-cells = <2>;
+	ngpios = <16>;
+	gpio-controller;
 };
 
 test_i2c_sx9500: sx9500@22 {
@@ -242,15 +266,6 @@ test_i2c_sht3xd: sht3xd@23 {
 	label = "SHT3XD";
 	reg = <0x23>;
 	alert-gpios = <&test_gpio 0 0>;
-};
-
-test_i2c_shtc3: SHTC3@70 {
-	compatible = "sensirion,shtcx";
-	label = "SHTC3";
-	reg = <0x70>;
-	chip = "shtc3";
-	measure-mode = "normal";
-	clock-stretching;
 };
 
 test_i2c_si7006: si7006@24 {
@@ -462,30 +477,6 @@ test_i2c_hdc: hdc@3f {
 	drdy-gpios = <&test_gpio 0 0>;
 };
 
-test_i2c_hdc2010: hdc2010@40 {
-	compatible = "ti,hdc2010";
-	label = "HDC2010";
-	reg = <0x40>;
-};
-
-test_i2c_hdc2021: hdc2021@40 {
-	compatible = "ti,hdc2021";
-	label = "HDC2021";
-	reg = <0x40>;
-};
-
-test_i2c_hdc2022: hdc2022@40 {
-	compatible = "ti,hdc2022";
-	label = "HDC2022";
-	reg = <0x40>;
-};
-
-test_i2c_hdc2080: hdc2080@40 {
-	compatible = "ti,hdc2080";
-	label = "HDC2080";
-	reg = <0x40>;
-};
-
 test_i2c_lp3943: lp3943@40 {
 	compatible = "ti,lp3943";
 	label = "LP3943";
@@ -589,9 +580,9 @@ test_i2c_max17055: max17055@49 {
 	v-empty = <3300>;
 };
 
-test_i2c_max17262: max17262@36 {
-	compatible = "maxim,max17262";
-	label = "MAX17262";
+test_i2c_max1726x: max1726x@36 {
+	compatible = "maxim,max1726x";
+	label = "MAX1726X";
 	reg = <0x36>;
 	design-voltage = <3600>;
 	desired-voltage = <3600>;
@@ -613,6 +604,17 @@ test_i2c_bmi270: bmi270@4a {
 	compatible = "bosch,bmi270";
 	label = "BMI270";
 	reg = <0x4a>;
+};
+
+test_i2c_pcal6408a: pcal6408a@4b {
+	compatible = "nxp,pcal6408a";
+	label = "PCAL6408A";
+	reg = <0x4b>;
+	gpio-controller;
+	#gpio-cells = <2>;
+	ngpios = <8>;
+	int-gpios = <&test_gpio 0 0>;
+	reset-gpios = <&test_gpio 0 0>;
 };
 
 test_i2c_fdc2x1x: fdc2x1x@2a {
@@ -643,10 +645,4 @@ test_i2c_sbc_gauge: sbsgauge@4d {
 	compatible = "sbs,sbs-gauge";
 	label = "SBSGAUGE";
 	reg = <0x4d>;
-};
-
-test_i2c_lm75: lm75@4e {
-	compatible = "lm75";
-	label = "LM75";
-	reg = <0x4e>;
 };
