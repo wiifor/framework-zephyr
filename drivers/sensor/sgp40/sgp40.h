@@ -8,6 +8,7 @@
 #define ZEPHYR_DRIVERS_SENSOR_SGP40_SGP40_H_
 
 #include <device.h>
+#include "sgp40_voc_conversion.h"
 
 #define SGP40_CMD_MEASURE_RAW	0x260F
 #define SGP40_CMD_MEASURE_TEST	0x280E
@@ -47,6 +48,7 @@ struct sgp40_data {
 	uint16_t raw_sample;
 	int8_t rh_param[3];
 	int8_t t_param[3];
+	GasIndexAlgorithmParams voc_params;
 
 #ifdef CONFIG_PM_DEVICE
 	enum pm_device_state pm_state;

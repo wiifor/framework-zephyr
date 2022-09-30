@@ -174,12 +174,18 @@ static int sgp40_channel_get(const struct device *dev,
 {
 	const struct sgp40_data *data = dev->data;
 
-	if (chan != SENSOR_CHAN_GAS_RES) {
+	if (chan != SENSOR_CHAN_GAS_RES && chan != SENSOR_CHAN_VOC) {
 		return -ENOTSUP;
 	}
 
-	val->val1 = data->raw_sample;
-	val->val2 = 0;
+	if (chan == SENSOR_CHAN_GAS_RES){
+		val->val1 = data->raw_sample;
+		val->val2 = 0;
+	}
+	else if (chan == SENSOR_CHAN_VOC){
+		GasIndexAlgorithm_process(&(data->voc_params), data->raw_sample, &(val->val1));
+		val->val2 = 0;
+	}
 
 	return 0;
 }
@@ -187,7 +193,7 @@ static int sgp40_channel_get(const struct device *dev,
 
 #ifdef CONFIG_PM_DEVICE
 static int sgp40_set_power_state(const struct device *dev,
-				  enum pm_device_state power_state)
+				  uint32_t power_state)
 {
 	struct sgp40_data *data = dev->data;
 	uint16_t cmd;
@@ -220,7 +226,7 @@ static int sgp40_set_power_state(const struct device *dev,
 }
 
 static uint32_t sgp40_get_power_state(const struct device *dev,
-		enum pm_device_state *state)
+		uint32_t *state)
 {
 	struct sgp40_data *data = dev->data;
 
@@ -231,7 +237,7 @@ static uint32_t sgp40_get_power_state(const struct device *dev,
 
 static int sgp40_pm_ctrl(const struct device *dev,
 	uint32_t ctrl_command,
-	enum pm_device_state *state)
+	uint32_t *state)
 {
 	int rc = 0;
 
@@ -247,7 +253,9 @@ static int sgp40_pm_ctrl(const struct device *dev,
 
 static int sgp40_init(const struct device *dev)
 {
+
 	const struct sgp40_config *cfg = dev->config;
+	struct sgp40_data *data = dev->data;
 	struct sensor_value comp_data;
 
 	if (!device_is_ready(cfg->bus)) {
@@ -265,6 +273,8 @@ static int sgp40_init(const struct device *dev)
 		LOG_DBG("Selftest succeded!");
 	}
 
+
+	GasIndexAlgorithm_init(&(data->voc_params),GasIndexAlgorithm_ALGORITHM_TYPE_VOC);
 	comp_data.val1 = SGP40_COMP_DEFAULT_T;
 	sensor_attr_set(dev,
 			SENSOR_CHAN_GAS_RES,
@@ -275,7 +285,6 @@ static int sgp40_init(const struct device *dev)
 			SENSOR_CHAN_GAS_RES,
 			(enum sensor_attribute) SENSOR_ATTR_SGP40_HUMIDITY,
 			&comp_data);
-
 	return 0;
 }
 
