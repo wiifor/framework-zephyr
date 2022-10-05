@@ -37,6 +37,10 @@
 			gpios = <&gpio0 20 0>;
 			label = "Green LED";
 		};
+        iaMClk: ia_mclk {
+			gpios = <&gpio1 3 0>;
+			label = "Master clock VM IA";
+		};
 	};
 
 	power {
@@ -117,7 +121,7 @@
 		iaInt: int {
 			gpios = <&gpio1 3 0>;
 			label = "Interrupt VM IA";
-		};	
+		};
 	};
 
 	SENS_GPIO {
@@ -150,6 +154,13 @@
 		};
 	};
 
+    pwmmclks {
+        compatible = "pwm-leds";
+		pwm_mclk: pwm_mclk {
+			pwms = <&pwm0 35>;
+		};
+    };
+
 	aliases {
 		/* These aliases are provided for compatibility with samples */
 		led0 = &led1;
@@ -165,6 +176,7 @@
 		led-green = &led3;
 		led-blue = &led1;
 		red-pwm-led = &pwm_led0;
+		pwm-mclk = &pwm_mclk;
 		lora0 = &lora;
 	};
 };
@@ -183,6 +195,12 @@
 	ppi-base = <0>;
 	gpiote-base = <0>;
 	#pwm-cells = <1>;
+};
+
+&pwm0 {
+	status = "okay";
+	ch0-pin = <35>;
+	ch0-inverted;
 };
 
 &adc {
